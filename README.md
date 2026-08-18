@@ -23,6 +23,10 @@
 > [!IMPORTANT]
 > This repository is a validated algorithm-engineering baseline, not a standalone veterinary diagnostic product. Product-level claims require complete blinded ground truth, independent-cow evaluation, field validation, and the applicable regulatory review.
 
+## Changelog
+
+- **2026-08-18** — Added the official company logo, credited four named contributors with institutional affiliations, and numbered the external reference radar. See [`CHANGELOG.md`](CHANGELOG.md) for the complete history.
+
 ## Overview
 
 Yangling Yuanshangyuan Intelligent Technology Co., Ltd., the company behind COWMATA, develops intelligent animal-health monitoring hardware and software. The official product portfolio includes tail sensors for estrus, pregnancy, calving, and health-risk monitoring. This repository contains the algorithm layer used to turn synchronized tail-mounted sensor streams and video-reviewed labels into reproducible behavior and event predictions.
@@ -321,10 +325,6 @@ The following open-source projects are tracked for model design, benchmarking, a
 - **Yachen Zhao** — Yan'an University
 
 The project is developed by the COWMATA algorithm team. Personal GitHub accounts should be credited through their own verified commits; contribution history is never fabricated.
-
-## Changelog
-
-- **2026-08-18** — Added the official company logo, credited four named contributors with institutional affiliations, and numbered the external reference radar. See [`CHANGELOG.md`](CHANGELOG.md) for the complete history.
 
 ## Responsible use and license
 
