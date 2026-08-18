@@ -42,82 +42,6 @@ COWMATA 背后的杨凌园上园智能科技有限公司（Yangling Yuanshangyua
 - 结合时序编码器、任务专用事件头与站立/躺卧状态机；
 - 利用候选挖掘与人工视频复核高效扩充稀有事件标签。
 
-## 产品背景
-
-官方 [COWMATA 官网](https://www.cowmata.com/en/) 描述了覆盖智能硬件、多模态传感、AI 算法与畜牧管理的动物数字大脑与智能预警平台。
-
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="assets/product/tail-sensor-farm.png" width="360" alt="COWMATA 尾环传感器 — 牧场版"><br>
-      <strong>尾环传感器 — 牧场版</strong><br>
-      <sub>发情、妊娠与产犊监测场景</sub>
-    </td>
-    <td align="center" width="50%">
-      <img src="assets/product/tail-sensor-vet.png" width="360" alt="COWMATA 尾环传感器 — 兽医版"><br>
-      <strong>尾环传感器 — 兽医版</strong><br>
-      <sub>繁殖与动物健康监测场景</sub>
-    </td>
-  </tr>
-</table>
-
-## 系统架构
-
-```mermaid
-flowchart LR
-    A["尾环传感器<br/>九轴 IMU · PPG · 温度"] --> B["连续原始流<br/>50 Hz IMU + 绝对时间戳"]
-    V["同步视频<br/>可复核金标准"] --> C["母标签时间轴<br/>状态 · 转换 · 重叠事件"]
-    B --> D["分段安全预处理<br/>间隙感知缓存 · 训练时窗口"]
-    C --> D
-    D --> E["共享时序表示<br/>GBDT 特征或 ResNet1D/TCN"]
-    E --> F1["姿态与行走"]
-    E --> F2["转换头<br/>站立 · 躺卧"]
-    E --> F3["稀有事件头<br/>排尿 · 排便 · 尾部动作"]
-    F1 --> G["站立/躺卧状态机"]
-    F2 --> G
-    F3 --> H["候选排序与区间合并"]
-    G --> I["行为时间轴"]
-    H --> J["人工视频确认"]
-    J --> C
-    I --> K["牧场告警与下游风险模型"]
-    H --> K
-```
-
-### 当前任务清单
-
-| 层 | 输出 | 当前状态 |
-|---|---|---|
-| 持续状态 | `STANDING`、`LYING`、`WALKING` | 由数据契约支持；站立/躺卧由状态逻辑稳定 |
-| 姿态转换 | `STANDING_UP`、`LYING_DOWN` | 已纳入可部署的标注辅助模型 |
-| 排泄事件 | `URINATION`、`DEFECATION` | 已纳入；事件级验证仍为验收标准 |
-| 尾部动作 | `TAIL_RAISED`、`TAIL_WAGGING` | 研究/稀有事件候选挖掘 |
-| 繁殖风险 | 发情、妊娠、产犊 | 产品与数据采集路线图；不作为本仓库基线已验证内容 |
-| 健康可行性 | 温度、PPG、乳腺炎相关研究 | 多模态研究方向；无未经验证的临床结论 |
-
-## 模型清单
-
-模型来源、哈希、大小与预期用途记录于 [`weights/MANIFEST.json`](weights/MANIFEST.json)。
-
-| 产物 | 角色 | 状态 | 备注 |
-|---|---|---|---|
-| `weights/deploy/gbdt_full.joblib` | 运营标注辅助 | 可用 | 104 个工程特征；八个稠密输出；已验证重构前后预测一致 |
-| `weights/checkpoints/offline_tcn_dev_epoch2.pt` | 深度模型续训与冒烟测试 | 仅开发 | 可加载并产出有限输出，但尚未完成正式模型报告 |
-
-GBDT 产物为默认推理模型。在训练运行、跨奶牛独立评估、阈值与部署行为完整记录之前，TCN 检查点不得作为生产模型呈现。
-
-## 数据契约
-
-机器可读配置为 [`configs/dataset.yaml`](configs/dataset.yaml)；完整规则见 [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md)。
-
-- 原始九轴 IMU 以 **50 Hz** 连续采样，并在加窗前保留。
-- 缓存的 `features.npy` 数组包含 **13 个通道**；连续性分段由 `metadata.json` 定义。
-- 窗口在训练/推理期间创建，且不得跨越已记录的数据间隙。
-- 视频与传感器记录共享同一绝对时间轴。
-- 事件保留起止区间，并可与持续状态重叠。
-- 训练/验证/测试归属按 `cow_id` 分离。
-- 归一化、阈值选择与早停不得查看测试奶牛。
-- 可报告样本量基于动物数、独立事件与硬负样本——而非滑动窗口。
-
 ## 快速开始
 
 ### 1. 克隆并创建环境
@@ -197,6 +121,82 @@ cowmata check-env --device cuda --precision auto
 # 运行选定的可复现流水线阶段。
 cowmata pipeline -- --stages diagnose,features,feature_model
 ```
+
+## 产品背景
+
+官方 [COWMATA 官网](https://www.cowmata.com/en/) 描述了覆盖智能硬件、多模态传感、AI 算法与畜牧管理的动物数字大脑与智能预警平台。
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="assets/product/tail-sensor-farm.png" width="360" alt="COWMATA 尾环传感器 — 牧场版"><br>
+      <strong>尾环传感器 — 牧场版</strong><br>
+      <sub>发情、妊娠与产犊监测场景</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="assets/product/tail-sensor-vet.png" width="360" alt="COWMATA 尾环传感器 — 兽医版"><br>
+      <strong>尾环传感器 — 兽医版</strong><br>
+      <sub>繁殖与动物健康监测场景</sub>
+    </td>
+  </tr>
+</table>
+
+## 系统架构
+
+```mermaid
+flowchart LR
+    A["尾环传感器<br/>九轴 IMU · PPG · 温度"] --> B["连续原始流<br/>50 Hz IMU + 绝对时间戳"]
+    V["同步视频<br/>可复核金标准"] --> C["母标签时间轴<br/>状态 · 转换 · 重叠事件"]
+    B --> D["分段安全预处理<br/>间隙感知缓存 · 训练时窗口"]
+    C --> D
+    D --> E["共享时序表示<br/>GBDT 特征或 ResNet1D/TCN"]
+    E --> F1["姿态与行走"]
+    E --> F2["转换头<br/>站立 · 躺卧"]
+    E --> F3["稀有事件头<br/>排尿 · 排便 · 尾部动作"]
+    F1 --> G["站立/躺卧状态机"]
+    F2 --> G
+    F3 --> H["候选排序与区间合并"]
+    G --> I["行为时间轴"]
+    H --> J["人工视频确认"]
+    J --> C
+    I --> K["牧场告警与下游风险模型"]
+    H --> K
+```
+
+### 当前任务清单
+
+| 层 | 输出 | 当前状态 |
+|---|---|---|
+| 持续状态 | `STANDING`、`LYING`、`WALKING` | 由数据契约支持；站立/躺卧由状态逻辑稳定 |
+| 姿态转换 | `STANDING_UP`、`LYING_DOWN` | 已纳入可部署的标注辅助模型 |
+| 排泄事件 | `URINATION`、`DEFECATION` | 已纳入；事件级验证仍为验收标准 |
+| 尾部动作 | `TAIL_RAISED`、`TAIL_WAGGING` | 研究/稀有事件候选挖掘 |
+| 繁殖风险 | 发情、妊娠、产犊 | 产品与数据采集路线图；不作为本仓库基线已验证内容 |
+| 健康可行性 | 温度、PPG、乳腺炎相关研究 | 多模态研究方向；无未经验证的临床结论 |
+
+## 模型清单
+
+模型来源、哈希、大小与预期用途记录于 [`weights/MANIFEST.json`](weights/MANIFEST.json)。
+
+| 产物 | 角色 | 状态 | 备注 |
+|---|---|---|---|
+| `weights/deploy/gbdt_full.joblib` | 运营标注辅助 | 可用 | 104 个工程特征；八个稠密输出；已验证重构前后预测一致 |
+| `weights/checkpoints/offline_tcn_dev_epoch2.pt` | 深度模型续训与冒烟测试 | 仅开发 | 可加载并产出有限输出，但尚未完成正式模型报告 |
+
+GBDT 产物为默认推理模型。在训练运行、跨奶牛独立评估、阈值与部署行为完整记录之前，TCN 检查点不得作为生产模型呈现。
+
+## 数据契约
+
+机器可读配置为 [`configs/dataset.yaml`](configs/dataset.yaml)；完整规则见 [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md)。
+
+- 原始九轴 IMU 以 **50 Hz** 连续采样，并在加窗前保留。
+- 缓存的 `features.npy` 数组包含 **13 个通道**；连续性分段由 `metadata.json` 定义。
+- 窗口在训练/推理期间创建，且不得跨越已记录的数据间隙。
+- 视频与传感器记录共享同一绝对时间轴。
+- 事件保留起止区间，并可与持续状态重叠。
+- 训练/验证/测试归属按 `cow_id` 分离。
+- 归一化、阈值选择与早停不得查看测试奶牛。
+- 可报告样本量基于动物数、独立事件与硬负样本——而非滑动窗口。
 
 ## 训练与评估
 
@@ -323,6 +323,25 @@ docs/                       数据、迁移、验证与参考文档
 - **赵雅晨** — 延安大学
 
 本项目由 COWMATA 算法团队开发。
+
+## 引用
+
+如本基线对您的工作有所帮助，请引用本仓库及确切的发布标签：
+
+```bibtex
+@software{cowmata_tailring,
+  title = {COWMATA Tail-Sensor Intelligence},
+  author = {Zhang, Xiangqing and Zhang, Yalong and Jiao, Tengyu and Zhao, Yachen},
+  year = {2026},
+  url = {https://github.com/zxq309/cowmata-tailring}
+}
+```
+
+机器可读的引用元数据见 [`CITATION.cff`](CITATION.cff)。
+
+## 贡献
+
+欢迎贡献与问题报告。工作流见 [`CONTRIBUTING.md`](CONTRIBUTING.md)，安全问题报告见 [`SECURITY.md`](SECURITY.md)。
 
 ## 负责任使用与许可
 

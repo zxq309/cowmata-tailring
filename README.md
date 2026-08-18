@@ -42,82 +42,6 @@ The `20260818` baseline was rebuilt around a small set of durable engineering ru
 - combine temporal encoders, task-specific event heads, and a standing/lying state machine;
 - use candidate mining and human video review to expand rare-event labels efficiently.
 
-## Product context
-
-The official [COWMATA website](https://www.cowmata.com/en/) describes an animal digital-brain and intelligent early-warning platform spanning intelligent hardware, multimodal sensing, AI algorithms, and livestock management.
-
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="assets/product/tail-sensor-farm.png" width="360" alt="COWMATA Tail Sensor — Farm Edition"><br>
-      <strong>Tail Sensor — Farm Edition</strong><br>
-      <sub>Estrus, pregnancy, and calving monitoring context</sub>
-    </td>
-    <td align="center" width="50%">
-      <img src="assets/product/tail-sensor-vet.png" width="360" alt="COWMATA Tail Sensor — Veterinary Edition"><br>
-      <strong>Tail Sensor — Veterinary Edition</strong><br>
-      <sub>Reproductive and animal-health monitoring context</sub>
-    </td>
-  </tr>
-</table>
-
-## System architecture
-
-```mermaid
-flowchart LR
-    A["Tail sensor<br/>9-axis IMU · PPG · temperature"] --> B["Continuous raw streams<br/>50 Hz IMU + absolute timestamps"]
-    V["Synchronized video<br/>reviewable ground truth"] --> C["Mother-label timeline<br/>states · transitions · overlapping events"]
-    B --> D["Segment-safe preprocessing<br/>gap-aware cache · train-time windows"]
-    C --> D
-    D --> E["Shared temporal representation<br/>GBDT features or ResNet1D/TCN"]
-    E --> F1["Posture and walking"]
-    E --> F2["Transition heads<br/>standing up · lying down"]
-    E --> F3["Rare-event heads<br/>urination · defecation · tail actions"]
-    F1 --> G["Standing/lying state machine"]
-    F2 --> G
-    F3 --> H["Candidate ranking and interval merging"]
-    G --> I["Behavior timeline"]
-    H --> J["Human video confirmation"]
-    J --> C
-    I --> K["Farm alerts and downstream risk models"]
-    H --> K
-```
-
-### Current task inventory
-
-| Layer | Outputs | Current status |
-|---|---|---|
-| Persistent state | `STANDING`, `LYING`, `WALKING` | Supported by the data contract; standing/lying is stabilized by state logic |
-| Posture transition | `STANDING_UP`, `LYING_DOWN` | Included in the deployable annotation-assistance model |
-| Elimination event | `URINATION`, `DEFECATION` | Included; event-level validation remains the acceptance criterion |
-| Tail action | `TAIL_RAISED`, `TAIL_WAGGING` | Research/rare-event candidate mining |
-| Reproductive risk | estrus, pregnancy, calving | Product and data-collection roadmap; not claimed as validated by this repository baseline |
-| Health feasibility | temperature, PPG, mastitis-related research | Multimodal research direction; no unsupported clinical claim |
-
-## Model inventory
-
-Model provenance, hashes, sizes, and intended use are recorded in [`weights/MANIFEST.json`](weights/MANIFEST.json).
-
-| Artifact | Role | Status | Notes |
-|---|---|---|---|
-| `weights/deploy/gbdt_full.joblib` | Operational annotation assistance | Usable | 104 engineered features; eight dense outputs; source-to-refactor prediction parity verified |
-| `weights/checkpoints/offline_tcn_dev_epoch2.pt` | Deep-model continuation and smoke testing | Development only | Loads and produces finite outputs, but does not have a completed formal model report |
-
-The GBDT artifact is the default inference model. The TCN checkpoint must not be presented as a production model until its training run, independent-cow evaluation, thresholds, and deployment behavior are fully documented.
-
-## Data contract
-
-The machine-readable configuration is [`configs/dataset.yaml`](configs/dataset.yaml); the complete rules are in [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md).
-
-- Raw nine-axis IMU is sampled continuously at **50 Hz** and preserved before windowing.
-- Cached `features.npy` arrays contain **13 channels**; continuity segments are defined by `metadata.json`.
-- Windows are created during training/inference and may never cross a recorded data gap.
-- Video and sensor records share an absolute time axis.
-- Events retain start/end intervals and may overlap persistent states.
-- Train/validation/test membership is separated by `cow_id`.
-- Normalization, threshold selection, and early stopping may not inspect test cows.
-- Reportable sample size is based on animals, independent events, and hard negatives—not sliding windows.
-
 ## Quick start
 
 ### 1. Clone and create the environment
@@ -197,6 +121,82 @@ cowmata check-env --device cuda --precision auto
 # Run selected reproducible pipeline stages.
 cowmata pipeline -- --stages diagnose,features,feature_model
 ```
+
+## Product context
+
+The official [COWMATA website](https://www.cowmata.com/en/) describes an animal digital-brain and intelligent early-warning platform spanning intelligent hardware, multimodal sensing, AI algorithms, and livestock management.
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="assets/product/tail-sensor-farm.png" width="360" alt="COWMATA Tail Sensor — Farm Edition"><br>
+      <strong>Tail Sensor — Farm Edition</strong><br>
+      <sub>Estrus, pregnancy, and calving monitoring context</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="assets/product/tail-sensor-vet.png" width="360" alt="COWMATA Tail Sensor — Veterinary Edition"><br>
+      <strong>Tail Sensor — Veterinary Edition</strong><br>
+      <sub>Reproductive and animal-health monitoring context</sub>
+    </td>
+  </tr>
+</table>
+
+## System architecture
+
+```mermaid
+flowchart LR
+    A["Tail sensor<br/>9-axis IMU · PPG · temperature"] --> B["Continuous raw streams<br/>50 Hz IMU + absolute timestamps"]
+    V["Synchronized video<br/>reviewable ground truth"] --> C["Mother-label timeline<br/>states · transitions · overlapping events"]
+    B --> D["Segment-safe preprocessing<br/>gap-aware cache · train-time windows"]
+    C --> D
+    D --> E["Shared temporal representation<br/>GBDT features or ResNet1D/TCN"]
+    E --> F1["Posture and walking"]
+    E --> F2["Transition heads<br/>standing up · lying down"]
+    E --> F3["Rare-event heads<br/>urination · defecation · tail actions"]
+    F1 --> G["Standing/lying state machine"]
+    F2 --> G
+    F3 --> H["Candidate ranking and interval merging"]
+    G --> I["Behavior timeline"]
+    H --> J["Human video confirmation"]
+    J --> C
+    I --> K["Farm alerts and downstream risk models"]
+    H --> K
+```
+
+### Current task inventory
+
+| Layer | Outputs | Current status |
+|---|---|---|
+| Persistent state | `STANDING`, `LYING`, `WALKING` | Supported by the data contract; standing/lying is stabilized by state logic |
+| Posture transition | `STANDING_UP`, `LYING_DOWN` | Included in the deployable annotation-assistance model |
+| Elimination event | `URINATION`, `DEFECATION` | Included; event-level validation remains the acceptance criterion |
+| Tail action | `TAIL_RAISED`, `TAIL_WAGGING` | Research/rare-event candidate mining |
+| Reproductive risk | estrus, pregnancy, calving | Product and data-collection roadmap; not claimed as validated by this repository baseline |
+| Health feasibility | temperature, PPG, mastitis-related research | Multimodal research direction; no unsupported clinical claim |
+
+## Model inventory
+
+Model provenance, hashes, sizes, and intended use are recorded in [`weights/MANIFEST.json`](weights/MANIFEST.json).
+
+| Artifact | Role | Status | Notes |
+|---|---|---|---|
+| `weights/deploy/gbdt_full.joblib` | Operational annotation assistance | Usable | 104 engineered features; eight dense outputs; source-to-refactor prediction parity verified |
+| `weights/checkpoints/offline_tcn_dev_epoch2.pt` | Deep-model continuation and smoke testing | Development only | Loads and produces finite outputs, but does not have a completed formal model report |
+
+The GBDT artifact is the default inference model. The TCN checkpoint must not be presented as a production model until its training run, independent-cow evaluation, thresholds, and deployment behavior are fully documented.
+
+## Data contract
+
+The machine-readable configuration is [`configs/dataset.yaml`](configs/dataset.yaml); the complete rules are in [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md).
+
+- Raw nine-axis IMU is sampled continuously at **50 Hz** and preserved before windowing.
+- Cached `features.npy` arrays contain **13 channels**; continuity segments are defined by `metadata.json`.
+- Windows are created during training/inference and may never cross a recorded data gap.
+- Video and sensor records share an absolute time axis.
+- Events retain start/end intervals and may overlap persistent states.
+- Train/validation/test membership is separated by `cow_id`.
+- Normalization, threshold selection, and early stopping may not inspect test cows.
+- Reportable sample size is based on animals, independent events, and hard negatives—not sliding windows.
 
 ## Training and evaluation
 
@@ -323,6 +323,25 @@ The following open-source projects are tracked for model design, benchmarking, a
 - **Yachen Zhao** — Yan'an University
 
 The project is developed by the COWMATA algorithm team.
+
+## Citation
+
+If this baseline supports your work, please cite it with the exact release tag:
+
+```bibtex
+@software{cowmata_tailring,
+  title = {COWMATA Tail-Sensor Intelligence},
+  author = {Zhang, Xiangqing and Zhang, Yalong and Jiao, Tengyu and Zhao, Yachen},
+  year = {2026},
+  url = {https://github.com/zxq309/cowmata-tailring}
+}
+```
+
+See [`CITATION.cff`](CITATION.cff) for machine-readable citation metadata.
+
+## Contributing
+
+Contributions and bug reports are welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the workflow and [`SECURITY.md`](SECURITY.md) for reporting security issues.
 
 ## Responsible use and license
 

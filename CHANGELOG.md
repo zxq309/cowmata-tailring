@@ -13,6 +13,9 @@ All notable changes to this repository are recorded here.
 - Numbered the external reference radar and introduced a concise README changelog section.
 - Converted generated diagnostic reports and inference display labels to English.
 - Removed the Chinese DOCX design artifact from GitHub while retaining it locally.
+- Added a Simplified Chinese README with a language switcher and a company contact link.
+- Trimmed verbose README statements and used Chinese author names in the Chinese README.
+- Moved Quick start before the product details and added citation and contributing sections.
 
 ## [0.1.0] - 2026-08-18
 
