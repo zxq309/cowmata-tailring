@@ -323,6 +323,25 @@ How to read it:
   [0.470, 0.597]), and event precision / false-alarm rates stay **not claimable** until
   `review_coverage` exists; the hit ratios above come from labelled stretches only.
 
+### Per-cow ranking (each cow = its own LOCO hold-out, official selection_score)
+
+| rank | test cow | selection_score | posture accuracy | WALKING AP | 5-event AP |
+|---|---|---|---|---|---|
+| 1 | 23489-8 | 0.642 | 1.0* | n/e | 0.99–1.00 |
+| 2 | 21100-10 | 0.636 | 1.0* | 0.988 | 0.09–0.59 |
+| 3 | **23335-7** | **0.627** | 1.0* | n/e | **0.86–0.99** |
+| 4 | 23509-9 | 0.553 | 0.843 | 0.928 | 0.02–0.34 |
+| 5 | 23381-w1 | 0.526 | 1.0* | n/e | 0.44–0.77 |
+| 6 | 24178-11 | 0.508 | 1.0* | n/e | 0.47–0.64 |
+| 7 | 20201-3 | 0.461 | 0.650 | 0.819 | 0.05–0.16 |
+| 8 | 21074-1 | 0.352 | 0.566 | 0.529 | 0.01–0.11 |
+
+`*` = degenerate (the test set carries a single posture class), `n/e` = not evaluable
+(no positives of that kind). The nominal winner 23489-8 rests on just 13 events (1–4
+per class), so its AP ≈ 1.00 is statistically fragile; the credible best result is
+**23335-7** — stand-up / urination / defecation reach F1@25 of 0.93 / 0.94 / 0.82 on
+288k test points and 82 true events (full per-task detail in the report).
+
 **GBDT retrain** — full 351,127-row × 120-feature (v2) table, xgboost GPU, cow-disjoint validation (23381-w1, 23509-9), per-event thresholds written into the bundle. The artifact stays local (`runs/gbdt_full/`) and is not promoted to `weights/deploy/` until review evidence exists.
 
 ## Reference radar

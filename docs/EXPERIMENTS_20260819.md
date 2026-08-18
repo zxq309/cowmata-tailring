@@ -52,6 +52,49 @@ less data.
 | 23335-7 | 0.932 | 0.855 | 0.978 | 0.980 | 0.986 |
 | 23489-8 | 1.000 | 1.000 | 1.000 | 1.000 | 0.990 |
 
+### Per-cow ranking (official selection_score) and the best cow
+
+Each cow is scored by the model trained without it, ranked by the official overall
+score:
+
+| rank | test cow | selection_score | posture accuracy | WALKING AP | 5-event AP |
+|---|---|---|---|---|---|
+| 1 | 23489-8 | 0.642 | 1.0* | n/e | 0.99–1.00 |
+| 2 | 21100-10 | 0.636 | 1.0* | 0.988 | 0.09–0.59 |
+| 3 | **23335-7** | **0.627** | 1.0* | n/e | **0.86–0.99** |
+| 4 | 23509-9 | 0.553 | 0.843 | 0.928 | 0.02–0.34 |
+| 5 | 23381-w1 | 0.526 | 1.0* | n/e | 0.44–0.77 |
+| 6 | 24178-11 | 0.508 | 1.0* | n/e | 0.47–0.64 |
+| 7 | 20201-3 | 0.461 | 0.650 | 0.819 | 0.05–0.16 |
+| 8 | 21074-1 | 0.352 | 0.566 | 0.529 | 0.01–0.11 |
+
+`*` = degenerate (single posture class in the test set), `n/e` = not evaluable. The
+nominal winner 23489-8 rests on 98 posture points (one class) and 13 events (1–4 per
+class), so its AP of 1.00 is statistically fragile. The most credible best result is
+**23335-7** — full 9-task detail:
+
+| task | 23335-7 detail |
+|---|---|
+| Posture (standing/lying) | test set carries a single class (780 points); accuracy 1.0 is degenerate |
+| WALKING | n/e — no walking positives in this test set |
+| STANDING_UP | 22 true / 21 pred, recall 0.909, **F1@25 0.930**, edit 87.2, onset median 302 ms |
+| LYING_DOWN | 19 / 15, recall 0.684, F1@25 0.765, edit 70.0, onset median 368 ms |
+| URINATION | 16 / 18, recall 1.000, **F1@25 0.941**, edit 70.4, onset median 296 ms |
+| DEFECATION | 21 / 23, recall 1.000, F1@25 0.818, edit 62.2, onset median 3.9 s |
+| TAIL_RAISED | 4 / 42, recall 0.500, F1@25 0.087 — the one weak spot, ~10× over-reporting |
+| MOUNTING / MOUNTED_BY | not_evaluable — zero annotated positives in the whole dataset |
+
+On this cow the model nearly "reports one, hits one" for the three main events
+(F1@25 0.82–0.94, onset error 0.3–0.4 s; defecation onset 3.9 s is the outlier).
+
+Three reservations. (1) 23489-8's rank-1 score is inflated as described above.
+(2) 23335-7's own posture/WALKING rows are degenerate or missing, so only the five
+event tasks are really evaluated on this cow. (3) Every number here is still a
+diagnostic on labelled stretches: each row is the score of a model that never saw that
+cow, and claimable precision / false-alarm rates still await `review_coverage`.
+23335-7 shows the model is already strong on clean-data cows; the weakness
+concentrates on the dirty, distribution-shifted big-data animals.
+
 ### Pooled evaluation over all 8 test cows (official metric functions)
 
 All 8 test-cow prediction files merged into one pool (~334k evaluation points, ~47
