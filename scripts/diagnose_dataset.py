@@ -277,45 +277,56 @@ def fold_report(splits: object) -> dict[str, object]:
 
 # ---------------------------------------------------------------- report
 def render_markdown(payload: dict[str, object]) -> str:
-    lines: list[str] = ["# 数据集诊断报告", ""]
+    lines: list[str] = ["# Dataset Diagnostic Report", ""]
 
     segments = payload["segments"]
-    lines.append("## A. 段（segment）分布")
+    lines.append("## A. Continuous-segment distribution")
     if not segments.get("available"):
-        lines.append(f"- 不可用：{segments.get('reason')}")
+        lines.append(f"- Unavailable: {segments.get('reason')}")
     else:
-        lines.append(f"- 会话数：{segments['sessions']}，总段数：{segments['segments_total']}")
         lines.append(
-            f"- 单段会话：{segments['sessions_with_one_segment']}，多段会话：{segments['sessions_multi_segment']}"
+            f"- Sessions: {segments['sessions']}; total segments: {segments['segments_total']}"
         )
-        lines.append(f"- 每会话段数直方图：{segments['segments_per_session_histogram']}")
+        lines.append(
+            f"- Single-segment sessions: {segments['sessions_with_one_segment']}; "
+            f"multi-segment sessions: {segments['sessions_multi_segment']}"
+        )
+        lines.append(
+            f"- Segments-per-session histogram: {segments['segments_per_session_histogram']}"
+        )
         seconds = segments["segment_seconds"]
         lines.append(
-            "- 段时长（秒）：min {min:.1f} / median {median:.1f} / mean {mean:.1f} / max {max:.1f}".format(**seconds)
+            "- Segment duration (seconds): min {min:.1f} / median {median:.1f} / "
+            "mean {mean:.1f} / max {max:.1f}".format(**seconds)
         )
     lines.append("")
 
     contamination = payload["contamination"]
-    lines.append("## B. 旧代码的跨段污染量")
+    lines.append("## B. Cross-segment context contamination in the legacy path")
     if not contamination.get("available"):
-        lines.append(f"- 不可用：{contamination.get('reason')}")
+        lines.append(f"- Unavailable: {contamination.get('reason')}")
     else:
         fraction = contamination["fraction"]
         lines.append(
-            f"- 样本总数 {contamination['samples_total']}，其中 {contamination['samples_with_cross_segment_context']} "
-            f"个（{fraction:.2%}）的因果上下文越过了段边界"
+            f"- Total samples: {contamination['samples_total']}; "
+            f"{contamination['samples_with_cross_segment_context']} ({fraction:.2%}) "
+            "have causal context crossing a segment boundary."
         )
         lines.append(
-            "- 判读：占比 <1% 可只重跑评估；>5% 说明既有模型结论需要重训后重新确认"
+            "- Interpretation: below 1% may justify evaluation-only reruns; above 5% "
+            "requires retraining before reconfirming previous conclusions."
         )
     lines.append("")
 
     annotations = payload["annotations"]
-    lines.append("## C. 标注审计")
+    lines.append("## C. Annotation audit")
     if not annotations.get("available"):
-        lines.append(f"- 不可用：{annotations.get('reason')}")
+        lines.append(f"- Unavailable: {annotations.get('reason')}")
     else:
-        lines.append("| 代码 | 区间数 | 牛数 | 会话数 | 均时长(s) | 中位(s) | 总时长(min) |")
+        lines.append(
+            "| Code | Intervals | Cows | Sessions | Mean duration (s) | "
+            "Median (s) | Total (min) |"
+        )
         lines.append("|---|---:|---:|---:|---:|---:|---:|")
         for item in annotations["per_code"]:
             lines.append(
@@ -323,8 +334,11 @@ def render_markdown(payload: dict[str, object]) -> str:
                 "{duration_s_median:.1f} | {total_minutes:.1f} |".format(**item)
             )
         lines.append("")
-        lines.append("### 抬尾标签冲突（口径 A 修复的对象）")
-        lines.append("| 代码 | 区间数 | 同时标了抬尾 | 被当成抬尾负例 |")
+        lines.append("### Tail-raised label conflicts")
+        lines.append(
+            "| Code | Intervals | Also annotated as tail raised | "
+            "Silently treated as a negative |"
+        )
         lines.append("|---|---:|---:|---:|")
         for item in annotations["tail_conflicts"]:
             lines.append(
@@ -332,26 +346,33 @@ def render_markdown(payload: dict[str, object]) -> str:
                 "{silently_negative_for_tail_head} |".format(**item)
             )
         lines.append("")
-        lines.append("### 可报告性（≥10 区间且 ≥3 头牛）")
-        lines.append("| 事件 | 区间数 | 牛数 | 结论 |")
+        lines.append("### Reportability (at least 10 intervals and 3 cows)")
+        lines.append("| Event | Intervals | Cows | Status |")
         lines.append("|---|---:|---:|---|")
         for item in annotations["evaluability"]:
             lines.append("| {code} | {intervals} | {cows} | {status} |".format(**item))
     lines.append("")
 
     coverage = payload["coverage"]
-    lines.append("## D. 穷尽复核覆盖")
-    lines.append(f"- 覆盖时长：{coverage['exhaustively_reviewed_hours']:.2f} 小时")
-    lines.append(f"- 覆盖会话：{coverage['covered_sessions']} / {coverage['total_sessions']}")
-    lines.append(f"- 结论：{coverage['verdict']}")
+    lines.append("## D. Exhaustive-review coverage")
+    lines.append(
+        f"- Reviewed duration: {coverage['exhaustively_reviewed_hours']:.2f} hours"
+    )
+    lines.append(
+        f"- Covered sessions: {coverage['covered_sessions']} / {coverage['total_sessions']}"
+    )
+    lines.append(f"- Verdict: {coverage['verdict']}")
     lines.append("")
 
     folds = payload["folds"]
-    lines.append("## E. LOCO 折平衡")
+    lines.append("## E. LOCO fold balance")
     if not folds.get("available"):
-        lines.append(f"- 不可用：{folds.get('reason')}")
+        lines.append(f"- Unavailable: {folds.get('reason')}")
     else:
-        lines.append("| 折 | 留出牛 | 训练会话 | 验证会话 | 测试会话 | 测试样本 |")
+        lines.append(
+            "| Fold | Held-out cow | Train sessions | Validation sessions | "
+            "Test sessions | Test samples |"
+        )
         lines.append("|---|---|---:|---:|---:|---:|")
         for row in folds["folds"]:
             lines.append(
@@ -360,7 +381,8 @@ def render_markdown(payload: dict[str, object]) -> str:
             )
         lines.append("")
         lines.append(
-            f"- 共 {folds['folds_total']} 折，其中测试样本 ≥1000 的只有 {folds['folds_with_usable_test']} 折"
+            f"- Total folds: {folds['folds_total']}; folds with at least 1,000 "
+            f"test samples: {folds['folds_with_usable_test']}"
         )
         lines.append(f"- {folds['note']}")
     return "\n".join(lines) + "\n"

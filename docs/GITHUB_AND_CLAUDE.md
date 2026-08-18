@@ -1,32 +1,51 @@
-# GitHub 维护与 Claude 上传
+# GitHub Maintenance and Claude Uploads
 
-## 分层原则
+## Repository layers
 
-- GitHub：代码、配置、测试、小型标签/分割、两个权重和 60 秒演示数据。
-- 本地数据：`supervised_cache/samples.csv` 和 `supervised_cache/session_cache/`，不进 Git。
-- `runs/`：实验产物，不进 Git；验证后仅把定稿权重和报告提升进仓库。
+- GitHub: source code, configuration, tests, small annotations/splits, two model artifacts, product/brand assets, and the 60-second demo.
+- Local/external data: `supervised_cache/samples.csv` and `supervised_cache/session_cache/`.
+- Generated runs: all experiment and prediction outputs under `runs/`.
+- Promoted artifacts: only reviewed model weights, manifests, reports, and release notes.
 
-当前两个权重分别约 6.7 MB 和 8.5 MB，可直接进 Git。[GitHub 官方文档](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github) 说明普通 Git 单文件超过 50 MiB 会警告、超过 100 MiB 会拒绝；未来单个权重超过该阈值时再用 Git LFS，不要现在引入。
+The current model files are approximately 6.7 MB and 8.5 MB, so ordinary Git is sufficient. GitHub warns for files larger than 50 MiB and blocks ordinary Git files larger than 100 MiB. Introduce Git LFS only when a future required artifact crosses that boundary.
 
-## 首次推送
+## Daily development workflow
 
-```powershell
-git config user.name "<your-name>"
-git config user.email "<your-github-email>"
-git add .
-git commit -m "Initial clean COWMATA algorithm baseline 20260818"
-git remote add origin https://github.com/<your-account>/<your-repo>.git
-git push -u origin main
+```bash
+git switch main
+git pull --ff-only
+git switch -c feature/<short-topic>
+
+# edit, test, and review
+pytest
+cowmata predict --cache-key demo_session_60s --data-root examples/demo_data --out runs/demo
+
+git add -A
+git commit -m "Describe one logical algorithm change"
+git push -u origin feature/<short-topic>
 ```
 
-建议先建私有仓库，确认数据与设备信息可公开后再转为公开。
+Use a pull request for substantive algorithm changes. The pull request should record the cows/events used, split policy, leakage checks, metric impact, and test evidence.
 
-推荐仓库名：`cowmata-tailring`。本版对应 Python 包版本和 Git 标签 `v0.1.0`；当天的下一版继续在同一仓库提交并升级版本，不再复制整个 GitHub 仓库。
+## Releases
 
-## `dist/` 是否保留
+The repository is `zxq309/cowmata-tailring`.
 
-上传 GitHub 后，不保留 `dist/`：GitHub 已提供克隆和 Download ZIP，重复归档容易和源码失去同步。发布文件应由确定的 Git 标签按需生成，不把手工 ZIP 当作源代码版本。
+- `v0.1.0`: clean executable baseline.
+- `v0.2.0`: English and visual GitHub documentation release.
 
-## Claude 网页版
+Future releases should update `pyproject.toml`, `CHANGELOG.md`, model/data manifests when relevant, tests, and release notes. Do not create another repository for each date.
 
-[Claude 官方帮助](https://support.anthropic.com/en/articles/8241126-what-kinds-of-documents-can-i-upload-to-claude-ai) 列出每个文件 30 MB 的限制。优先让 Claude 阅读 GitHub 仓库；若私有仓库无法授权访问，只上传源码、配置、测试、README 和权重清单，不上传二进制权重和训练缓存。临时分析包放在 `runs/share/` 并按需重建，用完删除，不进入 Git。
+## Why `dist/` is absent
+
+GitHub already provides clone, archive, tag, and release views. A hand-built ZIP can silently drift from the source commit, so `dist/` is not a source of truth. Generate release artifacts from an exact Git tag only when a consumer actually needs them.
+
+## Claude web uploads
+
+Claude documents currently have a 30 MB per-file limit. Prefer a GitHub integration when the private repository can be authorized. Otherwise upload only source, configuration, tests, README, and text manifests. Do not upload binary weights or the supervised cache.
+
+Temporary source bundles belong under `runs/share/`; they are ignored by Git and should be rebuilt from the current commit rather than manually maintained.
+
+## Credentials
+
+Use OAuth, SSH, or a personal access token. Never store account passwords, tokens, extraction codes, or private dataset links in this repository. Rotate any credential that appears in chat, logs, commits, or issue content.

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cowmata"
-version = "0.1.0"
-description = "COWMATA cattle tail-ring IMU research and inference pipeline"
+version = "0.2.0"
+description = "COWMATA cattle tail-sensor time-series research and inference pipeline"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 dependencies = [

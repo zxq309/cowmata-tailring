@@ -1,25 +1,43 @@
-# COWMATA IMU 数据契约
+# COWMATA IMU Data Contract
 
-## 母数据
+## Source data
 
-- 九轴 IMU 原始采样率为 50 Hz，连续数据永久保留；不在采集或原始标注阶段固定切窗。
-- `features.npy` 每行 13 个通道，顺序和单位由缓存生成器及 `metadata.json` 共同约束。
-- 连续段由 `metadata.json/segments` 定义；窗口不得跨越数据缺口。
-- 视频和传感器对齐到绝对时间轴，事件标注保留起止时刻。
+- Raw nine-axis IMU is sampled continuously at 50 Hz and retained before any fixed training window is selected.
+- Each `features.npy` row contains 13 channels; channel order and units are jointly defined by the cache builder and `metadata.json`.
+- Continuous spans are defined by `metadata.json/segments`; windows may not cross a recorded gap.
+- Sensor records and video are aligned to an absolute timeline.
+- Event annotations retain start and end timestamps.
 
-## 标签
+## Labels
 
-- 持续状态：`STANDING` / `LYING` / `WALKING`；历史 `FEEDING` 可读取但归入 `UPRIGHT` 辅助语义。
-- 状态转移：`STANDING_UP` / `LYING_DOWN`。
-- 尾部与排泄事件：`URINATION` / `DEFECATION` / `TAIL_RAISED` / `TAIL_WAGGING`。
-- 事件可与持续状态重叠，不强制收缩为单一互斥 Softmax 类别。
+- Persistent states: `STANDING`, `LYING`, and `WALKING`.
+- Historical `FEEDING` values may be read but are mapped to auxiliary `UPRIGHT` semantics.
+- Posture transitions: `STANDING_UP` and `LYING_DOWN`.
+- Elimination and tail events: `URINATION`, `DEFECATION`, `TAIL_RAISED`, and `TAIL_WAGGING`.
+- An event may overlap a persistent state; labels must not be collapsed into one mutually exclusive Softmax class.
 
-## 分割与统计
+The Git-tracked annotation table preserves original-language provenance fields together with standardized English labels and codes. Model logic must use the stable code fields.
 
-- 正式泛化评价按 `cow_id` 划分，同一头牛不能跨训练集与测试集。
-- 归一化统计、阈值选择和早停不得使用测试牛。
-- 事件样本量按独立牛、独立事件和困难负样本统计；重叠窗口数不代表独立样本。
+## Splits and statistics
 
-## 目录映射
+- Formal generalization evaluation is split by `cow_id`.
+- A cow may not appear in both training and test sets.
+- Normalization statistics, early stopping, threshold selection, and calibration may not inspect test cows.
+- Sample size is reported as independent cows, independent events, and hard negatives.
+- Overlapping windows are not independent samples.
 
-唯一项目数据根为 `datasets/cowmata_imu/`，机器可读路径集中在 `configs/dataset.yaml`。数据不进入 Git，但本地工作基线保留必要缓存以保证算法可直接验证。
+## Evaluation
+
+Report at minimum:
+
+- the number of independent cows and events;
+- event Precision, Recall, and F1;
+- false alarms per cow per 24 hours;
+- temporal localization error;
+- for calving, first correct alert lead time relative to the delivery anchor.
+
+Window Accuracy may be reported as a diagnostic but is not an acceptance metric.
+
+## Path mapping
+
+The only project data root is `datasets/cowmata_imu/`. Machine-readable paths are centralized in `configs/dataset.yaml`. Large data is excluded from Git, while the local working baseline retains the required cache for reproducibility.

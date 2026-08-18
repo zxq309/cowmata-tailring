@@ -1,25 +1,30 @@
-# 20260818 迁移说明
+# 20260818 Migration Record
 
-## 保留
+## Retained
 
-- `cattle_imu` 算法核心和原有合同测试；该包名必须保留，因为既有 Joblib 模型序列化了 `cattle_imu.gbdt.BinaryBooster`。
-- 正式 GBDT 模型和其完整特征提取/候选合并链路。
-- 必要标签、按牛分割和监督缓存。
-- 一个未完成正式评估的 offline TCN 开发检查点，仅作续训和工程烟雾测试。
+- The `cattle_imu` algorithm core and original contract tests.
+- The package path required by the serialized `cattle_imu.gbdt.BinaryBooster` artifact.
+- The operational GBDT model and its feature-extraction/candidate-merging path.
+- Required annotations, cow-level splits, and supervised-cache interface.
+- One incomplete offline TCN development checkpoint for continuation and engineering smoke tests only.
 
-## 清除/不迁入
+## Removed or excluded
 
-- Python 字节码缓存、Pytest 缓存、旧日志、一次性扫描脚本和临时备份。
-- 重复预测输出、中间特征表、失败/未完成实验目录。
-- 绑定个人磁盘和 `20260816` 绝对路径的入口。
-- 未被现有 GBDT 或 TCN 使用的 SSL/VICReg 缓存、窗口索引、预训练和原型检索支线。
+- Python bytecode, Pytest caches, old logs, one-off scan scripts, and temporary backups.
+- Duplicate predictions, intermediate feature tables, and failed/incomplete run directories.
+- Entry points bound to personal disk paths or the earlier `20260816` absolute layout.
+- SSL/VICReg cache, window index, pretraining, and prototype-retrieval branches not used by the retained GBDT or TCN artifacts.
+- A Chinese binary design document from the GitHub deployment; the local source copy remains available outside version control.
 
-## 结构变更
+## Structural changes
 
-- 数据统一为 `datasets/cowmata_imu/`，运行产物统一为 `runs/`，权重统一为 `weights/`。
-- 增加 `from cowmata import COWMATA` 模型优先 API 和 `cowmata` CLI。
-- 保留 `scripts/predict_full.py` 作为兼容入口，内部转到统一 CLI。
-- 分割清单的内部路径已改为项目相对路径；监督数组、时间戳、标签和分割成员未改变。
-- 仓库内增加 60 秒的真实演示缓存；大型监督缓存仅本机保留，不进入 Git。
+- Consolidated project data under `datasets/cowmata_imu/`.
+- Consolidated generated outputs under `runs/`.
+- Consolidated model artifacts under `weights/`.
+- Added the model-first `from cowmata import COWMATA` API and unified `cowmata` CLI.
+- Retained `scripts/predict_full.py` as a compatibility entry point routed to the unified CLI.
+- Converted split-manifest paths to repository-relative paths without changing array values, timestamps, labels, or split membership.
+- Added a 60-second real-session demo while excluding the large supervised cache from Git.
+- Added English GitHub documentation, official product assets, CI, governance, and reference-project tracking.
 
-旧迭代目录未被删除或覆盖；本说明中的“清除”是指不让废料进入 `20260818` 新基线。
+No earlier dated iteration directory was deleted or overwritten. “Removed” means excluded from the clean `20260818` baseline.

@@ -1,34 +1,65 @@
-# 全量监督缓存的外置与恢复
+# External Supervised-Cache Delivery and Recovery
 
-## 为什么不进 GitHub
+## Why the full cache is not stored in GitHub
 
-`supervised_cache` 是当前训练链路仍在使用的派生数据，不是废料。其中 `samples.csv` 约 60 MB，`session_cache/` 约 1.23 GB；它们用于重建特征表、训练 GBDT/TCN 和真实数据诊断。普通 Git 不适合维护频繁变化的大型数据集，而且该数据可能包含公司、设备和牛只信息。
+`supervised_cache` is derived data that is still required by the current training workflow. It is not obsolete material.
 
-GitHub 只保存 `sessions.csv`、标签、按牛分割清单、60 秒演示数据和可用权重。这样克隆仓库即可测试和推理；只有正式重训需要外置缓存。
+- `supervised_cache/samples.csv`: approximately 60 MB and 344,287 supervised center points.
+- `supervised_cache/session_cache/`: approximately 1.23 GB, containing 132 continuous 50 Hz sessions.
 
-## 20260818 数据版本
+These artifacts are used to rebuild feature tables, train GBDT/TCN models, run real-data diagnostics, and reproduce cow-level experiments. Ordinary Git is not designed for frequently changing datasets of this size, and the files may contain company, device, and animal identifiers.
 
-- 会话：132
-- 连续时长：131.5739 小时
-- 监督中心点：344,287
-- 本机恢复位置：`datasets/cowmata_imu/supervised_cache/`
-- 必需内容：`samples.csv`、`session_cache/<cache_key>/features.npy`、对应 `metadata.json`
+GitHub therefore stores only:
 
-恢复后执行：
+- `sessions.csv` and small metadata;
+- annotations and cow-level split manifests;
+- a 60-second executable demo session;
+- model artifacts small enough for ordinary Git.
 
-```powershell
-cowmata check-data
+A clone can run tests and inference without the private cache. Full retraining requires cache recovery.
+
+## Dataset snapshot: 20260818
+
+| Field | Value |
+|---|---:|
+| Sessions | 132 |
+| Continuous duration | 131.5739 hours |
+| Supervised center points | 344,287 |
+| Local recovery path | `datasets/cowmata_imu/supervised_cache/` |
+
+Required contents:
+
+```text
+supervised_cache/
+├── samples.csv
+├── sessions.csv
+└── session_cache/
+    └── <cache_key>/
+        ├── features.npy
+        └── metadata.json
+```
+
+After recovery, run:
+
+```bash
+cowmata check-data --full-cache-scan
 pytest
 ```
 
-## 存储建议
+## Recommended delivery process
 
-百度网盘可作为第一阶段的私有交付渠道，但不要把长期有效的公开链接和提取码提交到 Git。建议流程：
+Baidu Netdisk is acceptable as a temporary private delivery channel. Do not commit a long-lived public link or extraction code to Git.
 
-1. 将上述两个必需内容打包为带日期的数据归档，例如 `cowmata-supervised-cache-20260818.7z`。
-2. 计算归档的 SHA-256，并在私下交付记录中同时保存文件名、大小、哈希和上传日期。
-3. 在仓库成员之间私发链接和提取码，下载后校验 SHA-256，再解压到固定恢复位置。
-4. 算法代码通过 Git 标签版本化；数据归档也使用相同日期或数据版本号，禁止用“最新版.zip”覆盖旧包。
-5. 数据规模或协作人数增长后，迁移到公司控制的对象存储/NAS，并采用账号权限和版本保留策略。
+1. Package the required files as a dated archive such as `cowmata-supervised-cache-20260818.7z`.
+2. Compute a SHA-256 hash for the completed archive.
+3. Record the archive name, byte size, hash, data date, uploader, and destination project version in a private delivery record.
+4. Share the download link and extraction code privately with approved repository members.
+5. Verify the SHA-256 before extraction.
+6. Extract into the exact recovery path and run the full cache scan.
+7. Never overwrite an older archive with a generic name such as `latest.zip`.
 
-Claude 网页版只分析代码、配置、测试和小型元数据，不上传这 1.29 GB 缓存。需要分析真实问题时，只导出脱敏的小样本和对应标签。
+As data volume and team size grow, migrate to company-controlled object storage or NAS with account-level access control, immutable versions, retention rules, and audit logs.
+
+## Claude and other web analysis tools
+
+Do not upload the 1.29 GB cache to a web chat. Share source code, configuration, tests, small metadata, and a deliberately de-identified sample instead. Any temporary analysis bundle belongs under `runs/share/`, is never committed, and should be deleted after use.

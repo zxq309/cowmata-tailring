@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If this internal research baseline supports your work, cite the COWMATA Algorithm Team and the exact release tag."
+title: "COWMATA Tail-Sensor Intelligence"
+type: software
+version: 0.2.0
+date-released: 2026-08-18
+repository-code: "https://github.com/zxq309/cowmata-tailring"
+url: "https://www.cowmata.com/en/"
+authors:
+  - name: "COWMATA Algorithm Team"

@@ -18,13 +18,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DATA_ROOT = PROJECT_ROOT / "datasets" / "cowmata_imu"
 DEFAULT_MODEL = PROJECT_ROOT / "weights" / "deploy" / "gbdt_full.joblib"
 
-EVENT_LABELS_ZH = {
-    "STANDING_UP": "起立",
-    "LYING_DOWN": "卧倒",
-    "URINATION": "排尿",
-    "DEFECATION": "排便",
-    "TAIL_RAISED": "抬尾",
-    "TAIL_WAGGING": "甩尾",
+EVENT_LABELS = {
+    "STANDING_UP": "standing up",
+    "LYING_DOWN": "lying down",
+    "URINATION": "urination",
+    "DEFECATION": "defecation",
+    "TAIL_RAISED": "tail raised",
+    "TAIL_WAGGING": "tail wagging",
 }
 
 
@@ -177,7 +177,7 @@ def _candidate_frame(
                 rows.append(
                     {
                         "event_code": code,
-                        "label": EVENT_LABELS_ZH[code],
+                        "label": EVENT_LABELS[code],
                         "t_start_rel_ms": int(times[start]),
                         "t_end_rel_ms": int(times[previous] + 500),
                         "max_prob": round(float(result[column].iloc[start : previous + 1].max()), 4),
@@ -188,7 +188,7 @@ def _candidate_frame(
         rows.append(
             {
                 "event_code": code,
-                "label": EVENT_LABELS_ZH[code],
+                "label": EVENT_LABELS[code],
                 "t_start_rel_ms": int(times[start]),
                 "t_end_rel_ms": int(times[previous] + 500),
                 "max_prob": round(float(result[column].iloc[start : previous + 1].max()), 4),

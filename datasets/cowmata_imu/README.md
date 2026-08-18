@@ -1,8 +1,12 @@
-# 数据与 Git 边界
+# Data and Git Boundary
 
-本目录的标签、会话表和按牛分割清单进入 Git。以下派生数据仅在本机保留，由 `.gitignore` 排除：
+This directory versions small annotations, session metadata, and cow-level split manifests. The following derived data remains local and is excluded by `.gitignore`:
 
-- `supervised_cache/samples.csv`：344,287 个训练中心点及母标签索引，约 60 MB。
-- `supervised_cache/session_cache/`：132 个 50 Hz、13 通道的监督会话数组，约 1.23 GB。
+- `supervised_cache/samples.csv`: 344,287 supervised center points, approximately 60 MB.
+- `supervised_cache/session_cache/`: 132 continuous 50 Hz, 13-channel session arrays, approximately 1.23 GB.
 
-它们用于重建特征表、重训 GBDT/TCN 和运行真实数据诊断，不是可随意删除的旧输出。GitHub 克隆后可用 `examples/demo_data/` 完成端到端推理烟雾测试；正式重训需恢复上述本地数据。外置交付与恢复流程见 [`../../docs/DATA_ACCESS.md`](../../docs/DATA_ACCESS.md)。
+These artifacts are required to rebuild feature tables, retrain GBDT/TCN models, and run real-data diagnostics. They are not disposable legacy output.
+
+A GitHub clone can complete end-to-end inference smoke testing with `examples/demo_data/`. Formal retraining requires the local cache. See [`../../docs/DATA_ACCESS.md`](../../docs/DATA_ACCESS.md) for external delivery and recovery.
+
+The annotation CSV retains original-language provenance values together with stable English labels and event codes. Algorithm logic should use the code columns; provenance fields should not be translated in place.

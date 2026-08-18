@@ -6,6 +6,7 @@ __pycache__/
 *.egg-info/
 build/
 dist/
+docs/*.docx
 
 # Keep labels, session metadata and cow-level split manifests versionable.
 # Ignore only the large derived arrays and regenerable window tables.

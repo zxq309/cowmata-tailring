@@ -2,11 +2,22 @@
 
 All notable changes to this repository are recorded here.
 
+## [0.2.0] - 2026-08-18
+
+- Rebuilt the GitHub-facing documentation in English.
+- Expanded the README with product context, architecture, model inventory, data contracts, training/evaluation rules, verification evidence, roadmap, and team governance.
+- Added official COWMATA logo and tail-sensor product assets from the company website.
+- Added an original multimodal AI pipeline hero illustration.
+- Corrected contributor roles: Zhang Yalong is the Legal Representative; Jia Tengyu is a Student Researcher.
+- Added a curated external-project watchlist for time-series modeling, temporal segmentation, wearable representation learning, anomaly detection, and MLOps.
+- Converted generated diagnostic reports and inference display labels to English.
+- Removed the Chinese DOCX design artifact from GitHub while retaining it locally.
+
 ## [0.1.0] - 2026-08-18
 
 - Created the clean COWMATA tail-ring algorithm baseline.
 - Added a unified Python API and `cowmata` CLI.
 - Retained the validated GBDT deploy weight and TCN development checkpoint.
-- Added cow-level split contracts, tests and a 60-second executable demo session.
-- Removed the unused SSL cache, index and disconnected SSL/prototype code path.
+- Added cow-level split contracts, tests, and a 60-second executable demo session.
+- Removed the unused SSL cache, index, and disconnected SSL/prototype code path.
 - Kept the full supervised cache external to Git while preserving its training interface.

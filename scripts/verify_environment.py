@@ -40,7 +40,7 @@ def main() -> int:
     model = CausalMultiTaskTCN(in_channels=8, width=16).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
     scaler = make_grad_scaler(policy) if args.device == "cuda" else None
-    sample = torch.randn((2, 8, 2048), device=device)  # 不小于最大头的 context_samples(1500)
+    sample = torch.randn((2, 8, 2048), device=device)  # Covers the largest 1,500-sample context.
     target = torch.randn((2, 6), device=device)
     start = time.perf_counter()
     optimizer.zero_grad(set_to_none=True)
