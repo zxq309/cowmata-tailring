@@ -1,5 +1,8 @@
 # COWMATA repository instructions (20260819)
 
+Before quoting any number from this package, read `README.md`, `docs/DATA_CONTRACT.md`,
+`docs/METRICS.md` and `docs/VERIFICATION_20260819.md`.
+
 ## Non-negotiable data and evaluation rules
 
 - Preserve raw nine-axis IMU continuously at 50 Hz. Windowing is a training parameter,
@@ -16,6 +19,9 @@
 ## Repository boundaries
 
 - Never commit `supervised_cache/session_cache/`, `samples.csv`, `runs/`, or archives.
+- Do not infer production metrics from the 60-second demo, from overlapping windows,
+  or from any pooled cross-cow figure computed on the 20260818 data (two of six
+  animals hold ~96% of the supervised samples).
 - Keep the 60-second demo session and the deployed GBDT working from a fresh clone.
 - `weights/deploy/gbdt_full.joblib` is byte-identical to a verified artefact. Do not
   rewrite it; `cowmata/compat.py` keeps it loadable.

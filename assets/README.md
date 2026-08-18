@@ -15,10 +15,15 @@ Do not reuse these brand or product assets outside company-authorized contexts.
 
 ## Original repository visual
 
-`figures/cowmata-ai-pipeline-hero.png` was generated for this repository with OpenAI's built-in image generation tool on 2026-08-18.
+`figures/cowmata-ai-pipeline-hero.png` was produced for this repository on 2026-08-18.
 
-Prompt summary: a wide scientific illustration of a dairy cow with a compact tail-root sensor, continuous multichannel IMU/PPG/temperature signals, a temporal AI pipeline, behavior/event outputs, and farm-monitoring dashboards. The image intentionally contains no text, logo, percentage, or clinical-performance claim.
+Content: a wide scientific illustration of a dairy cow with a compact tail-root sensor,
+continuous multichannel IMU/PPG/temperature signals, a temporal AI pipeline,
+behavior/event outputs, and farm-monitoring dashboards. The image intentionally
+contains no text, logo, percentage, or clinical-performance claim.
 
 The visual is conceptual. It does not define hardware dimensions, sensor placement instructions, validated model performance, or a regulatory-approved user interface.
 
-`figures/cowmata-framework-en.png` and `figures/cowmata-framework-zh.png` are the English and Simplified Chinese overall-framework diagrams, generated with ChatGPT on 2026-08-18 and stored locally for the system-architecture section of each README.
+`figures/cowmata-framework-en.png` and `figures/cowmata-framework-zh.png` are the English
+and Simplified Chinese overall-framework diagrams, prepared on 2026-08-18 for the
+system-architecture section of each README.

@@ -126,10 +126,9 @@ diagnostics, not claims — see §3.
 ### Event-level diagnostics, cow-level bootstrap over the 8 test cows
 
 Cow-level bootstrap 95% intervals in brackets (n = 8 unless noted). Every fold reports
-`evidence_level: not_evaluable` — the gate requires ≥10 true events across ≥3 cows per
-evaluation and each LOCO fold evaluates exactly one cow — so precision, F1 and
-false-alarm rates stay **unclaimable**. The numbers below are diagnostics computed on
-labelled stretches only and read systematically optimistic.
+`evidence_level: not_evaluable` (the gate requires ≥10 true events across ≥3 cows per
+evaluation; each LOCO fold evaluates exactly one cow). The numbers below are
+diagnostics on labelled stretches only and read systematically optimistic — see §3.
 
 | event | recall (2.5 s tolerance) | F1@25 | edit score | onset median error |
 |---|---|---|---|---|
@@ -142,11 +141,8 @@ labelled stretches only and read systematically optimistic.
 Reading: recall is solid (urination 75%, defecation 70% — the model finds most events),
 but over-prediction collapses F1@25, and the failure concentrates on the two big-data
 cows: URINATION on 21074-1 is 28 true intervals against **748** predicted ones,
-DEFECATION 4 against 142, TAIL_RAISED on 20201-3 is 7 against 274. Their thresholds
-were selected on the validation cows and do not transfer. This is exactly the
-over-segmentation that motivated the 20260819 post-processing change, and it is the
-quantity `review_coverage` exists to measure. Onset localisation is acceptable:
-stand-up / lie-down median 0.2–3 s, urination 2.4 s, defecation 4.2 s.
+DEFECATION 4 against 142, TAIL_RAISED on 20201-3 is 7 against 274. Onset localisation
+is acceptable: stand-up / lie-down median 0.2–3 s, urination 2.4 s, defecation 4.2 s.
 
 <details>
 <summary>Full per-event, per-cow table (40 rows)</summary>

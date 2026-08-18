@@ -63,6 +63,9 @@ Baidu Netdisk is acceptable as a temporary private delivery channel. The 2026081
 
 As data volume and team size grow, migrate to company-controlled object storage or NAS with account-level access control, immutable versions, retention rules, and audit logs.
 
-## Claude and other web analysis tools
+## Third-party web tools
 
-Do not upload the 1.29 GB cache to a web chat. Share source code, configuration, tests, small metadata, and a deliberately de-identified sample instead. Any temporary analysis bundle belongs under `runs/share/`, is never committed, and should be deleted after use.
+Do not upload the 1.4 GB cache to any third-party web service. Share source code,
+configuration, tests, small metadata, and a deliberately de-identified sample instead.
+Any temporary analysis bundle belongs under `runs/share/`, is never committed, and
+should be deleted after use.
