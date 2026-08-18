@@ -10,7 +10,7 @@
 
   <p>
     <a href="https://github.com/zxq309/cowmata-tailring/actions/workflows/ci.yml"><img src="https://github.com/zxq309/cowmata-tailring/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-    <a href="https://github.com/zxq309/cowmata-tailring/releases"><img src="https://img.shields.io/github/v/release/zxq309/cowmata-tailring?display_name=tag&style=flat" alt="Release"></a>
+    <a href="https://github.com/zxq309/cowmata-tailring/releases/tag/v0.2.0"><img src="https://img.shields.io/badge/release-v0.2.0-0A7EA4" alt="Release v0.2.0"></a>
     <img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB" alt="Python">
     <img src="https://img.shields.io/badge/PyTorch-2.4%2B-EE4C2C" alt="PyTorch">
     <img src="https://img.shields.io/badge/data%20split-by%20cow-2E8B57" alt="Split by cow">
