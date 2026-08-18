@@ -10,7 +10,7 @@
 
   <p>
     <a href="https://github.com/zxq309/cowmata-tailring/actions/workflows/ci.yml"><img src="https://github.com/zxq309/cowmata-tailring/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-    <a href="https://github.com/zxq309/cowmata-tailring/releases/tag/v0.3.0"><img src="https://img.shields.io/badge/release-v0.3.0-0A7EA4" alt="Release v0.3.0"></a>
+    <a href="https://github.com/zxq309/cowmata-tailring/releases/tag/v0.3.1"><img src="https://img.shields.io/badge/release-v0.3.1-0A7EA4" alt="Release v0.3.1"></a>
     <img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB" alt="Python">
     <img src="https://img.shields.io/badge/PyTorch-optional-EE4C2C" alt="PyTorch 可选">
     <img src="https://img.shields.io/badge/data%20split-by%20cow-2E8B57" alt="Split by cow">
@@ -27,6 +27,7 @@
 
 ## 更新记录
 
+- **2026-08-18** — 首次真实数据训练：MS-TCN++ 8 折严格 LOCO + GBDT 合规重训。按牛结果与 bootstrap 区间见双语[实验报告](docs/EXPERIMENTS_20260819.zh-CN.md)（[English](docs/EXPERIMENTS_20260819.md)）。
 - **2026-08-19** — 发布 v0.3.0：MS-TCN++ 多阶段时序模型（ASRF 式边界头）；schema-2 int16 缓存（52 → 18 字节/帧）；新增 `MOUNTING` / `MOUNTED_BY` 事件头；迟滞后处理；逐事件阈值写入模型包；torch 变为可选依赖；完整监督缓存以百度网盘链接发布（见[数据集](#数据集)一节）。完整历史见 [`CHANGELOG.md`](CHANGELOG.md)。
 - **2026-08-18** — 新增公司官方 logo、署名四位实名贡献者及其单位，并为外部参考雷达添加序号。
 
@@ -219,7 +220,7 @@ flowchart LR
 
 | 产物 | 角色 | 状态 | 备注 |
 |---|---|---|---|
-| `weights/deploy/gbdt_full.joblib` | 运营标注辅助 | 可用 | `feature_version=1` 下 104 个工程特征；与已验证的 20260818 产物字节一致。其早于逐事件阈值机制，重训前以 feature_version 1 与 0.5 阈值打分 |
+| `weights/deploy/gbdt_full.joblib` | 运营标注辅助 | 可用 | `feature_version=1` 下 104 个工程特征；与已验证的 20260818 产物字节一致。其早于逐事件阈值机制，以 feature_version 1 与 0.5 阈值打分。本地已有带奶牛不相交阈值的 v2 特征重训产物，尚未晋升——见[实验报告](docs/EXPERIMENTS_20260819.zh-CN.md) |
 | `weights/checkpoints/offline_tcn_dev_epoch2.pt` | 仅存证 | 20260819 无法加载 | 20260819 模型为 `MultiTaskMSTCN`，架构与标签集均不同，此检查点不可加载或续训。它从未是可部署模型 |
 
 GBDT 产物为默认推理模型。TCN 检查点不得作为生产模型呈现；其替代者（MS-TCN++）通过 `cowmata train` 训练，并按标准跨奶牛独立协议报告。
@@ -321,7 +322,20 @@ cowmata check-data --full-cache-scan
 - 模型包回环：训练写出的逐事件阈值与 `feature_version` 在推理时原样生效；
 - 无 torch 主机上 `cowmata check-env` 正常完成。
 
-如实说明：所有 torch 依赖模块仅做了编译检查与契约测试（测试自行跳过）；本记录未执行训练运行，因此本包内没有任何新的真实数据指标。在 RTX 3090 主机上运行 `pytest tests/test_torch_contracts.py` 之前，请勿信任任何深度模型数字。
+如实说明：该验证记录早于首次训练运行，不包含任何真实数据指标。首次训练运行及其证据状态见[实验结果](#实验结果)。
+
+## 实验结果
+
+首次真实数据训练，2026-08-18；完整双语报告：[docs/EXPERIMENTS_20260819.zh-CN.md](docs/EXPERIMENTS_20260819.zh-CN.md)（[English](docs/EXPERIMENTS_20260819.md)）。
+
+**MS-TCN++ 8 折严格 LOCO**（单卡 RTX 3090 用时 40.5 分钟；early stopping 使每折在 9–21 个 epoch 收敛）：
+
+- test selection score **均值 0.538，95% 牛级 bootstrap 置信区间 [0.470, 0.597]**（n = 8 头牛；按牛分布 0.35–0.64）；
+- 2.5 秒容差召回率：排尿 **0.745 [0.51, 0.94]**，排便 **0.703 [0.41, 0.91]**；
+- onset 中位误差约 1–4 秒；两头数据大户上的过度预测是主要失败模式；
+- 事件 precision 与误报率仍**不可引用**：`review_coverage` 为空，且每折只评估一头牛。
+
+**GBDT 重训** — 全量 351,127 行 × 120 特征（v2）特征表，xgboost GPU，奶牛不相交验证（23381-w1、23509-9），逐事件阈值写入 bundle。产物留在本地（`runs/gbdt_full/`），待复核证据就绪后再晋升 `weights/deploy/`。
 
 ## 参考雷达
 

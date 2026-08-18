@@ -1,5 +1,20 @@
 # Changelog
 
+All notable changes to this repository are recorded here.
+
+## [0.3.1] - 2026-08-18
+
+- First real-data training run of the 20260819 baseline: MS-TCN++ 8-fold strict LOCO
+  (cow-disjoint validation), 40.5 min on one RTX 3090, early stopping at 9–21 epochs
+  per fold. Per-cow results, cow-level bootstrap intervals, and the evidence status
+  live in the bilingual experiment report (`docs/EXPERIMENTS_20260819.md`,
+  `docs/EXPERIMENTS_20260819.zh-CN.md`).
+- Retrained the GBDT deploy candidate on the full 351,127-row × 120-feature (v2) table
+  with cow-disjoint validation cows 23381-w1 and 23509-9; per-event thresholds are
+  written into the bundle. The artifact stays local under `runs/gbdt_full/` and is not
+  promoted to `weights/deploy/` until review evidence exists.
+- README gained an Experiment results section in English and Simplified Chinese.
+
 ## [0.3.0] - 2026-08-19
 
 ### Architecture

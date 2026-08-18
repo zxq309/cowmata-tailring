@@ -10,7 +10,7 @@
 
   <p>
     <a href="https://github.com/zxq309/cowmata-tailring/actions/workflows/ci.yml"><img src="https://github.com/zxq309/cowmata-tailring/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-    <a href="https://github.com/zxq309/cowmata-tailring/releases/tag/v0.3.0"><img src="https://img.shields.io/badge/release-v0.3.0-0A7EA4" alt="Release v0.3.0"></a>
+    <a href="https://github.com/zxq309/cowmata-tailring/releases/tag/v0.3.1"><img src="https://img.shields.io/badge/release-v0.3.1-0A7EA4" alt="Release v0.3.1"></a>
     <img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB" alt="Python">
     <img src="https://img.shields.io/badge/PyTorch-optional-EE4C2C" alt="PyTorch optional">
     <img src="https://img.shields.io/badge/data%20split-by%20cow-2E8B57" alt="Split by cow">
@@ -27,6 +27,7 @@
 
 ## Changelog
 
+- **2026-08-18** — First real-data training run: MS-TCN++ 8-fold strict LOCO plus a compliant GBDT retrain. Per-cow results and bootstrap intervals in the bilingual [experiment report](docs/EXPERIMENTS_20260819.md)（[中文版](docs/EXPERIMENTS_20260819.zh-CN.md)）.
 - **2026-08-19** — Released v0.3.0: MS-TCN++ multi-stage temporal model with an ASRF-style boundary head; schema-2 int16 cache (52 → 18 bytes/frame); `MOUNTING` / `MOUNTED_BY` event heads; hysteresis post-processing; per-event thresholds written into the model bundle; torch made an optional dependency; the full supervised cache published as Baidu Netdisk links in the [Dataset](#dataset) section. See [`CHANGELOG.md`](CHANGELOG.md) for the complete history.
 - **2026-08-18** — Added the official company logo, credited four named contributors with institutional affiliations, and numbered the external reference radar.
 
@@ -219,7 +220,7 @@ Model provenance, hashes, sizes, and intended use are recorded in [`weights/MANI
 
 | Artifact | Role | Status | Notes |
 |---|---|---|---|
-| `weights/deploy/gbdt_full.joblib` | Operational annotation assistance | Usable | 104 engineered features at `feature_version=1`; byte-identical to the verified 20260818 artefact. It predates the per-event threshold keys, so it scores at feature_version 1 with 0.5 thresholds until retrained |
+| `weights/deploy/gbdt_full.joblib` | Operational annotation assistance | Usable | 104 engineered features at `feature_version=1`; byte-identical to the verified 20260818 artefact. It predates the per-event threshold keys, so it scores at feature_version 1 with 0.5 thresholds. A v2-feature retrain with cow-disjoint thresholds exists locally and is not yet promoted — see the [experiment report](docs/EXPERIMENTS_20260819.md) |
 | `weights/checkpoints/offline_tcn_dev_epoch2.pt` | Provenance only | Not loadable by 20260819 | The 20260819 model is `MultiTaskMSTCN` with a different architecture and label set, so this checkpoint cannot be loaded or resumed. It was never a deployable model |
 
 The GBDT artifact is the default inference model. The TCN checkpoint must not be presented as a production model; its replacement (MS-TCN++) is trained with `cowmata train` and reported under the standard independent-cow protocol.
@@ -289,7 +290,20 @@ The 20260819 baseline is verified in [`docs/VERIFICATION_20260819.md`](docs/VERI
 - bundle round-trip: per-event thresholds and `feature_version` are written by training and honoured unchanged at inference;
 - `cowmata check-env` completes on a host with no torch.
 
-Stated plainly: every torch-dependent module was compile-checked and contract-tested with the tests skipping themselves; no training run was performed in this record, so no real-data metric in this package is new. Run `pytest tests/test_torch_contracts.py` on the RTX 3090 host before trusting any deep-model number.
+Stated plainly: that verification record predates the first training run and contains no real-data metric. The first training run and its evidence status are reported in [Experiment results](#experiment-results).
+
+## Experiment results
+
+First real-data run, 2026-08-18; full bilingual report: [docs/EXPERIMENTS_20260819.md](docs/EXPERIMENTS_20260819.md)（[中文版](docs/EXPERIMENTS_20260819.zh-CN.md)）.
+
+**MS-TCN++ 8-fold strict LOCO** (40.5 min on one RTX 3090; early stopping ended every fold at 9–21 epochs):
+
+- test selection score **mean 0.538, 95% cow-level bootstrap CI [0.470, 0.597]** (n = 8 cows; per-cow spread 0.35–0.64);
+- recall at 2.5 s tolerance: urination **0.745 [0.51, 0.94]**, defecation **0.703 [0.41, 0.91]**;
+- onset median error ~1–4 s; over-prediction on the two data-heavy cows is the dominant failure mode;
+- event precision and false-alarm rates remain **not claimable**: `review_coverage` is empty and each fold evaluates one cow.
+
+**GBDT retrain** — full 351,127-row × 120-feature (v2) table, xgboost GPU, cow-disjoint validation (23381-w1, 23509-9), per-event thresholds written into the bundle. The artifact stays local (`runs/gbdt_full/`) and is not promoted to `weights/deploy/` until review evidence exists.
 
 ## Reference radar
 
