@@ -1,6 +1,58 @@
 # Changelog
 
-All notable changes to this repository are recorded here.
+## [0.3.0] - 2026-08-19
+
+### Architecture
+- Replaced the single-stage windowed TCN with `MultiTaskMSTCN`: strided frame stem,
+  MS-TCN++ dual-dilated prediction generation, three refinement stages, and an
+  ASRF-style boundary head. Every stage is supervised; T-MSE smoothing is in the loss.
+- Replaced per-label sliding windows with `DenseSegmentDataset`, which supervises a
+  contiguous chunk at every masked step.
+- Removed the `pytorch-tcn` dependency; chunk-with-overlap inference is exact.
+
+### Data contract
+- Cache schema 2: int16 counts, 9 channels, sparse quality intervals, no stored
+  timestamps. 52 → 18 bytes per frame. Schema 1 is read transparently.
+- New per-session metadata field `tail_position`.
+
+### Labels
+- Added `MOUNTING` and `MOUNTED_BY`.
+- Deprecated `TAIL_WAGGING` (readable, never trained, never reported).
+- `FEEDING` remains readable and folded into `UPRIGHT`.
+
+### Features
+- `FEATURE_VERSION` gate. Version 1 reproduces the deployed 104-column list by name and
+  order; version 2 adds amplitude self-calibration and two rotation invariants (120).
+
+### Metrics
+- Five-layer suite: frame, segment (`F1@tIoU`, edit score), deployment, generalisation
+  (per-cow + cow-level bootstrap), day level (Se/Sp/PPV/lead time).
+- One model-selection objective across the whole repository.
+
+### Post-processing
+- Hysteresis thresholding and boundary snapping in `postprocess.assemble_intervals`.
+- Per-event thresholds are written into the bundle and honoured at inference.
+
+### Pipelines
+- The three batch scripts (`build_supervised_cache`, `build_feature_table`,
+  `train_full_gbdt`) became `cowmata/pipelines.py`; `scripts/` keeps four-line shims.
+- `build_cache` writes the dense label frame alongside `samples.csv`, so the deep and
+  GBDT branches share one label derivation instead of two.
+- `train_gbdt` selects each per-event threshold on a **cow-disjoint** validation split
+  and writes it, with `feature_version`, into the joblib bundle. An event with no
+  validation evidence keeps 0.5 and is reported as `default_no_validation_evidence`.
+- Dense prediction files now carry `cache_key`, `cow_id`, `device_mac`, `session_id`,
+  so mining and the day-level layer can group by animal without a manual rejoin.
+
+### Runtime
+- Torch is imported lazily and is no longer a hard dependency; install `cowmata[deep]`
+  on the training host. `check-env` reports which subcommands work without it.
+
+### Structure
+- `cattle_imu` + `cowmata` + `scripts` → `cowmata` + thin shims; `compat.py` keeps the
+  deployed joblib loadable.
+- `fusion.py` moved to `experiments/`; `train_event_loco.py` and
+  `predict_continuous.py` removed.
 
 ## [0.2.0] - 2026-08-18
 

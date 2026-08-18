@@ -4,32 +4,40 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cowmata"
-version = "0.2.0"
-description = "COWMATA cattle tail-sensor time-series research and inference pipeline"
+version = "0.3.0"
+description = "COWMATA cattle tail-sensor temporal segmentation and event detection"
 readme = "README.md"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.11,<3.14"
 dependencies = [
   "joblib>=1.4",
   "numpy>=2.0",
   "pandas>=2.2",
-  "pyarrow>=17",
   "PyYAML>=6",
   "scikit-learn>=1.5",
   "scipy>=1.14",
-  "torch>=2.4,<3",
-  "pytorch-tcn>=1.2,<2",
-  "xgboost>=2,<4",
 ]
 
+# Torch is deliberately NOT a hard dependency.  The cache, feature, GBDT,
+# metric, post-processing and day-level layers are numpy/pandas/sklearn only,
+# and they are what a field or annotation machine actually runs.  Install
+# `cowmata[deep]` on the training host.
+
+# pytorch-tcn is no longer required: dense inference over a whole segment needs
+# no streaming buffers, and the chunk-with-overlap path is exact rather than
+# approximately equivalent.
+
 [project.optional-dependencies]
+deep = ["torch>=2.4,<3"]
 dev = ["pytest>=8"]
+gbdt = ["xgboost>=2,<4"]
+parquet = ["pyarrow>=17"]
 
 [project.scripts]
 cowmata = "cowmata.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["cattle_imu*", "cowmata*", "scripts*"]
+include = ["cowmata*", "scripts*", "experiments*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

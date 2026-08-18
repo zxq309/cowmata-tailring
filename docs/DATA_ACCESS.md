@@ -4,28 +4,30 @@
 
 `supervised_cache` is derived data that is still required by the current training workflow. It is not obsolete material.
 
-- `supervised_cache/samples.csv`: approximately 60 MB and 344,287 supervised center points.
-- `supervised_cache/session_cache/`: approximately 1.23 GB, containing 132 continuous 50 Hz sessions.
+- `supervised_cache/samples.csv`: approximately 59 MB and 351,128 supervised center points.
+- `supervised_cache/session_cache/`: approximately 1.4 GB, containing 132 continuous 50 Hz sessions (schema-2 `signal.i16.npy` + `meta.json`).
 
 These artifacts are used to rebuild feature tables, train GBDT/TCN models, run real-data diagnostics, and reproduce cow-level experiments. Ordinary Git is not designed for frequently changing datasets of this size, and the files may contain company, device, and animal identifiers.
 
 GitHub therefore stores only:
 
-- `sessions.csv` and small metadata;
+- `sessions.csv`, `dense_labels.csv.gz`, and small metadata;
 - annotations and cow-level split manifests;
 - a 60-second executable demo session;
 - model artifacts small enough for ordinary Git.
 
 A clone can run tests and inference without the private cache. Full retraining requires cache recovery.
 
-## Dataset snapshot: 20260818
+## Dataset snapshot: 20260819
 
 | Field | Value |
 |---|---:|
 | Sessions | 132 |
-| Continuous duration | 131.5739 hours |
-| Supervised center points | 344,287 |
+| Supervised center points | 351,128 |
 | Local recovery path | `datasets/cowmata_imu/supervised_cache/` |
+
+The current snapshot is published in the README [Dataset](../README.md#dataset) section
+as two Baidu Netdisk links (`session_cache`, `samples.csv`) by owner decision.
 
 Required contents:
 
@@ -33,10 +35,11 @@ Required contents:
 supervised_cache/
 ├── samples.csv
 ├── sessions.csv
+├── dense_labels.csv.gz
 └── session_cache/
     └── <cache_key>/
-        ├── features.npy
-        └── metadata.json
+        ├── signal.i16.npy      (schema 2; a schema-1 features.npy / metadata.json pair is also read)
+        └── meta.json
 ```
 
 After recovery, run:
@@ -48,9 +51,9 @@ pytest
 
 ## Recommended delivery process
 
-Baidu Netdisk is acceptable as a temporary private delivery channel. Do not commit a long-lived public link or extraction code to Git.
+Baidu Netdisk is acceptable as a temporary private delivery channel. The 20260819 snapshot links and extraction codes are recorded in the README Dataset section by owner decision; keep future snapshots on this private delivery flow.
 
-1. Package the required files as a dated archive such as `cowmata-supervised-cache-20260818.7z`.
+1. Package the required files as a dated archive such as `cowmata-supervised-cache-20260819.7z`.
 2. Compute a SHA-256 hash for the completed archive.
 3. Record the archive name, byte size, hash, data date, uploader, and destination project version in a private delivery record.
 4. Share the download link and extraction code privately with approved repository members.

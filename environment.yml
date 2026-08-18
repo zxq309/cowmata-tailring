@@ -6,7 +6,6 @@ dependencies:
   - joblib
   - numpy
   - pandas
-  - pyarrow
   - pyyaml
   - scikit-learn
   - scipy
@@ -14,9 +13,13 @@ dependencies:
   - xgboost
   - pip
   - pip:
-      - pytorch-tcn>=1.2,<2
       - pytest>=8
 
-# Install the CUDA-enabled PyTorch wheel matching the training computer, then:
+# Install the CUDA-enabled PyTorch wheel that matches the training computer
+# (RTX 3090 / Ampere / BF16) from https://pytorch.org/get-started/locally/, then:
 #   pip install -e . --no-deps
 # This prevents a generic pip install from replacing CUDA PyTorch with a CPU wheel.
+#
+# Windows note: mamba_ssm and several Triton kernels are Linux-only. Keep
+# num_workers > 0 (spawn + persistent_workers), and set COWMATA_GPU_DUTY below 1.0
+# if the display-attached GPU bugchecks under sustained load.

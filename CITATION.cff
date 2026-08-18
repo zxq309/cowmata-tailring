@@ -7,11 +7,4 @@ date-released: 2026-08-18
 repository-code: "https://github.com/zxq309/cowmata-tailring"
 url: "https://www.cowmata.com/en/"
 authors:
-  - name: "Xiangqing Zhang"
-    affiliation: "Yangling Yuanshangyuan Intelligent Technology Co., Ltd.; Yan'an University"
-  - name: "Yalong Zhang"
-    affiliation: "Yangling Yuanshangyuan Intelligent Technology Co., Ltd."
-  - name: "Tengyu Jiao"
-    affiliation: "Yan'an University"
-  - name: "Yachen Zhao"
-    affiliation: "Yan'an University"
+  - name: "COWMATA Algorithm Team"

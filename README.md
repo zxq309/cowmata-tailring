@@ -10,9 +10,9 @@
 
   <p>
     <a href="https://github.com/zxq309/cowmata-tailring/actions/workflows/ci.yml"><img src="https://github.com/zxq309/cowmata-tailring/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-    <a href="https://github.com/zxq309/cowmata-tailring/releases/tag/v0.2.0"><img src="https://img.shields.io/badge/release-v0.2.0-0A7EA4" alt="Release v0.2.0"></a>
+    <a href="https://github.com/zxq309/cowmata-tailring/releases/tag/v0.3.0"><img src="https://img.shields.io/badge/release-v0.3.0-0A7EA4" alt="Release v0.3.0"></a>
     <img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB" alt="Python">
-    <img src="https://img.shields.io/badge/PyTorch-2.4%2B-EE4C2C" alt="PyTorch">
+    <img src="https://img.shields.io/badge/PyTorch-optional-EE4C2C" alt="PyTorch optional">
     <img src="https://img.shields.io/badge/data%20split-by%20cow-2E8B57" alt="Split by cow">
     <img src="https://img.shields.io/badge/license-proprietary-lightgrey" alt="Proprietary">
   </p>
@@ -23,24 +23,38 @@
 ![COWMATA multimodal tail-sensor intelligence pipeline](assets/figures/cowmata-ai-pipeline-hero.png)
 
 > [!IMPORTANT]
-> This repository is a validated algorithm-engineering baseline, not a standalone veterinary diagnostic product. Product-level claims require complete blinded ground truth, independent-cow evaluation, field validation, and the applicable regulatory review.
+> This repository is a validated algorithm-engineering baseline, not a standalone veterinary diagnostic product. Product-level claims require complete blinded ground truth, independent-cow evaluation, field validation, and the applicable regulatory review. Read [`docs/VERIFICATION_20260819.md`](docs/VERIFICATION_20260819.md) before quoting any number from this package.
 
 ## Changelog
 
-- **2026-08-18** — Added the official company logo, credited four named contributors with institutional affiliations, and numbered the external reference radar. See [`CHANGELOG.md`](CHANGELOG.md) for the complete history.
+- **2026-08-19** — Released v0.3.0: MS-TCN++ multi-stage temporal model with an ASRF-style boundary head; schema-2 int16 cache (52 → 18 bytes/frame); `MOUNTING` / `MOUNTED_BY` event heads; hysteresis post-processing; per-event thresholds written into the model bundle; torch made an optional dependency; the full supervised cache published as Baidu Netdisk links in the [Dataset](#dataset) section. See [`CHANGELOG.md`](CHANGELOG.md) for the complete history.
+- **2026-08-18** — Added the official company logo, credited four named contributors with institutional affiliations, and numbered the external reference radar.
 
 ## Overview
 
 Yangling Yuanshangyuan Intelligent Technology Co., Ltd., the company behind COWMATA, develops intelligent animal-health monitoring hardware and software. The official product portfolio includes tail sensors for estrus, pregnancy, calving, and health-risk monitoring. This repository contains the algorithm layer used to turn synchronized tail-mounted sensor streams and video-reviewed labels into reproducible behavior and event predictions.
 
-The `20260818` baseline was rebuilt around a small set of durable engineering rules:
+The `20260819` baseline is built around a small set of durable engineering rules:
 
 - preserve continuous raw sensing before choosing training windows;
 - align sensor data and video labels on an absolute timeline;
+- supervise dense chunks — one label frame per window step, not one window per label point;
 - split training, validation, and test data by animal identity;
-- report independent cows and independent events instead of inflated overlapping-window counts;
-- combine temporal encoders, task-specific event heads, and a standing/lying state machine;
-- use candidate mining and human video review to expand rare-event labels efficiently.
+- combine a multi-stage temporal model (MS-TCN++) with task-specific event heads and a standing/lying state machine;
+- post-process with hysteresis and boundary snapping, then mine candidates for human video review to expand rare-event labels;
+- report independent cows and independent events instead of inflated overlapping-window counts.
+
+## Three tasks, three time scales
+
+Naming the tasks correctly is what makes the right literature and the right libraries findable.
+
+| | Input | Output | Scale | Field |
+|---|---|---|---|---|
+| **A. Posture / locomotion** | continuous 50 Hz stream | a state at every instant | seconds | temporal segmentation |
+| **B. Seven events** | continuous 50 Hz stream | intervals `(start, stop, class)` | seconds to 30 s | temporal action detection |
+| **C. Oestrus / calving** | A + B aggregated per hour and day | risk and alert | days | change-point / risk prediction |
+
+This is **not** time-series classification (UCR/UEA-style, on pre-trimmed sequences) and **not** forecasting. Only layer C borders on prediction.
 
 ## Quick start
 
@@ -57,18 +71,21 @@ Install the PyTorch build that matches the target machine from the [official PyT
 
 ```bash
 python -m pip install -e . --no-deps
+# deep-learning host additionally:
+python -m pip install -e ".[deep]"
 ```
 
 ### 2. Verify the clone
 
 ```bash
-pytest
-cowmata check-env --device cpu --precision fp32
+pytest tests/test_contracts.py tests/test_pipelines.py   # 48 tests, no torch needed
+cowmata check-env --device cpu                            # works without torch
+pytest tests/test_torch_contracts.py                      # model contracts, needs torch
 ```
 
 ### 3. Run the bundled 60-second demo
 
-The demo does not require the private 1.29 GB supervised cache:
+The demo does not require the private supervised cache:
 
 ```bash
 cowmata predict \
@@ -106,7 +123,7 @@ The model object loads once and can predict multiple cached sessions without rel
 
 ```bash
 # Validate session metadata, labels, cache contracts, and cow-level splits.
-cowmata check-data
+cowmata check-data --root .
 
 # Read every local cache array as a stronger integrity check.
 cowmata check-data --full-cache-scan
@@ -114,12 +131,29 @@ cowmata check-data --full-cache-scan
 # Write a structured dataset diagnostic report.
 cowmata diagnose --out runs/diagnostics
 
-# Check CPU or CUDA forward/backward execution.
-cowmata check-env --device cpu --precision fp32
-cowmata check-env --device cuda --precision auto
+# Cache footprint before you collect.
+cowmata plan-storage --cows 200 --days 7
 
-# Run selected reproducible pipeline stages.
-cowmata pipeline -- --stages diagnose,features,feature_model
+# Cow-grouped k-fold splits, cow-disjoint validation.
+cowmata make-splits --folds 5
+
+# Rebuild the schema-2 cache from raw JSON + labels.
+cowmata build-cache --annotations ... --calibration-manifest ... --output-root ...
+
+# Hand-crafted feature table (offline or causal windows).
+cowmata build-features --samples ... --session-cache ... --out ... --offline
+
+# GBDT bundle with per-event thresholds on a cow-disjoint split.
+cowmata train-gbdt --feature-table ... --backend xgboost --device cuda
+
+# Train the multi-stage temporal model on one fold.
+cowmata train --labels ... --cache-root ... --splits ... --fold 1 --out runs/fold1
+
+# Build a human review queue from dense predictions.
+cowmata mine --predictions runs/... --events URINATION,MOUNTED_BY --out runs/review_01
+
+# Check CPU or CUDA execution.
+cowmata check-env --device cpu --precision fp32
 ```
 
 ## Product context
@@ -149,10 +183,10 @@ flowchart LR
     V["Synchronized video<br/>reviewable ground truth"] --> C["Mother-label timeline<br/>states · transitions · overlapping events"]
     B --> D["Segment-safe preprocessing<br/>gap-aware cache · train-time windows"]
     C --> D
-    D --> E["Shared temporal representation<br/>GBDT features or ResNet1D/TCN"]
+    D --> E["Shared temporal representation<br/>GBDT features or MS-TCN++ (multi-stage)"]
     E --> F1["Posture and walking"]
     E --> F2["Transition heads<br/>standing up · lying down"]
-    E --> F3["Rare-event heads<br/>urination · defecation · tail actions"]
+    E --> F3["Rare-event heads<br/>urination · defecation · tail actions · mounting"]
     F1 --> G["Standing/lying state machine"]
     F2 --> G
     F3 --> H["Candidate ranking and interval merging"]
@@ -174,7 +208,8 @@ The overall framework is shown below:
 | Persistent state | `STANDING`, `LYING`, `WALKING` | Supported by the data contract; standing/lying is stabilized by state logic |
 | Posture transition | `STANDING_UP`, `LYING_DOWN` | Included in the deployable annotation-assistance model |
 | Elimination event | `URINATION`, `DEFECATION` | Included; event-level validation remains the acceptance criterion |
-| Tail action | `TAIL_RAISED`, `TAIL_WAGGING` | Research/rare-event candidate mining |
+| Mounting event | `MOUNTING`, `MOUNTED_BY` | Added in 20260819; being mounted is the veterinary gold standard for oestrus |
+| Tail action | `TAIL_RAISED` | Included; `TAIL_WAGGING` deprecated (readable, never trained, never reported) |
 | Reproductive risk | estrus, pregnancy, calving | Product and data-collection roadmap; not claimed as validated by this repository baseline |
 | Health feasibility | temperature, PPG, mastitis-related research | Multimodal research direction; no unsupported clinical claim |
 
@@ -184,103 +219,77 @@ Model provenance, hashes, sizes, and intended use are recorded in [`weights/MANI
 
 | Artifact | Role | Status | Notes |
 |---|---|---|---|
-| `weights/deploy/gbdt_full.joblib` | Operational annotation assistance | Usable | 104 engineered features; eight dense outputs; source-to-refactor prediction parity verified |
-| `weights/checkpoints/offline_tcn_dev_epoch2.pt` | Deep-model continuation and smoke testing | Development only | Loads and produces finite outputs, but does not have a completed formal model report |
+| `weights/deploy/gbdt_full.joblib` | Operational annotation assistance | Usable | 104 engineered features at `feature_version=1`; byte-identical to the verified 20260818 artefact. It predates the per-event threshold keys, so it scores at feature_version 1 with 0.5 thresholds until retrained |
+| `weights/checkpoints/offline_tcn_dev_epoch2.pt` | Provenance only | Not loadable by 20260819 | The 20260819 model is `MultiTaskMSTCN` with a different architecture and label set, so this checkpoint cannot be loaded or resumed. It was never a deployable model |
 
-The GBDT artifact is the default inference model. The TCN checkpoint must not be presented as a production model until its training run, independent-cow evaluation, thresholds, and deployment behavior are fully documented.
+The GBDT artifact is the default inference model. The TCN checkpoint must not be presented as a production model; its replacement (MS-TCN++) is trained with `cowmata train` and reported under the standard independent-cow protocol.
 
 ## Data contract
 
 The machine-readable configuration is [`configs/dataset.yaml`](configs/dataset.yaml); the complete rules are in [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md).
 
 - Raw nine-axis IMU is sampled continuously at **50 Hz** and preserved before windowing.
-- Cached `features.npy` arrays contain **13 channels**; continuity segments are defined by `metadata.json`.
+- Schema-2 caches store `signal.i16.npy` — `(N, 9)` **int16 device counts** — plus `meta.json` with calibration divisors/bias, continuity segments, sparse quality intervals, and `tail_position`. That is 18 bytes/frame; the 20260818 schema-1 `features.npy` (13 float32 channels) is read transparently through the same API.
 - Windows are created during training/inference and may never cross a recorded data gap.
 - Video and sensor records share an absolute time axis.
-- Events retain start/end intervals and may overlap persistent states.
-- Train/validation/test membership is separated by `cow_id`.
-- Normalization, threshold selection, and early stopping may not inspect test cows.
-- Reportable sample size is based on animals, independent events, and hard negatives—not sliding windows.
+- Events retain start/end intervals and may overlap persistent states; `MOUNTING` / `MOUNTED_BY` were added in 20260819, `TAIL_WAGGING` was deprecated.
+- Train/validation/test membership is separated by `cow_id`. Normalization, threshold selection, and early stopping may not inspect test cows.
+- Reportable sample size is based on animals, independent events, and hard negatives — not sliding windows.
 
-## Training and evaluation
+## Dataset
 
-### Feature model
+The full supervised cache stays out of Git: it is too large for ordinary Git and contains company, device, and animal identifiers. It is distributed as two Baidu Netdisk archives; everything a fresh clone needs to run ships in this repository.
 
-```bash
-python -m scripts.build_feature_table
-python -m scripts.train_feature_model
-```
+| Artifact | Contents | Size | Distribution |
+|---|---|---|---|
+| `supervised_cache/session_cache/` | 132 continuous 50 Hz sessions — schema-2 `signal.i16.npy` (9-channel int16 counts) + `meta.json` (calibration, segments, `tail_position`) | ≈ 1.4 GB | [百度网盘 · session_cache](https://pan.baidu.com/s/1lnLpqO_UX5S57zmI1Qf_qw?pwd=u9n4)（提取码 `u9n4`） |
+| `supervised_cache/samples.csv` | 351,128 supervised center points — cow / session / segment coordinates and per-event masks | ≈ 59 MB | [百度网盘 · samples.csv](https://pan.baidu.com/s/12mj-bflbcekc1x1_HI2NeQ?pwd=s5rd)（提取码 `s5rd`） |
+| `supervised_cache/sessions.csv`, `dense_labels.csv.gz` | Session metadata and the dense label frame shared by the GBDT and deep branches | ≈ 7 MB | in this repository |
+| `annotations/`, `loco_splits/`, `development_split/` | Adjudicated annotations and cow-level split manifests | small | in this repository |
+| `examples/demo_data/…/demo_session_60s/` | 60 s real session (schema 1) for clone-ready smoke testing | ≈ 0.2 MB | in this repository |
 
-### Full GBDT candidate model
-
-```bash
-python -m scripts.train_full_gbdt \
-  --feature-table runs/feature_table/feature_table.parquet
-```
-
-### Deep leave-one-cow-out experiments
+To recover the full cache, extract both archives into `datasets/cowmata_imu/supervised_cache/` and run:
 
 ```bash
-cowmata pipeline -- \
-  --stages deep_loco \
-  --epochs 30 \
-  --batch-size 32 \
-  --device cuda
+cowmata check-data --full-cache-scan
 ```
 
-Every experiment must record:
-
-1. cow IDs in each split;
-2. independent event counts and hard-negative counts;
-3. preprocessing/window parameters;
-4. model and threshold configuration;
-5. event Precision/Recall/F1;
-6. false alarms per cow per 24 hours;
-7. temporal localization error;
-8. for calving, the first correct alert lead time relative to the delivery anchor.
-
-Window-level accuracy alone is not an acceptance metric.
+These artifacts are required for full retraining and real-data diagnostics — they are not obsolete cache waste. See [`docs/DATA_ACCESS.md`](docs/DATA_ACCESS.md) for delivery and integrity rules.
 
 ## Repository layout
 
 ```text
 .github/                    CI, issue templates, and pull-request template
 assets/                     Official brand/product assets and repository visuals
-cattle_imu/                 Stable algorithm core and serialized-model compatibility
-cowmata/                    User-facing Python API and CLI
-scripts/                    Data, training, diagnostics, evaluation, and mining entry points
+cowmata/                    One package: io, cache, preprocessing, features, labels,
+                            models, dataset, train, metrics, postprocess, daily,
+                            inference, gbdt, tools, runtime, cli, compat
+scripts/                    Four-line shims over cowmata.cli (legacy module paths)
+experiments/                Tried and not adopted (late fusion)
 configs/                    Machine-readable dataset configuration
 datasets/cowmata_imu/       Small metadata + local Git-ignored supervised cache
 examples/demo_data/         Clone-ready 60-second real-session demo
 weights/deploy/             Usable annotation-assistance model
-weights/checkpoints/        Development-only continuation checkpoints
+weights/checkpoints/        Provenance-only development checkpoint
 runs/                       Generated experiments and predictions (Git ignored)
-tests/                      Data, inference, and PyTorch contract tests
+tests/                      Data, pipeline, and PyTorch contract tests
 docs/                       Data, migration, verification, and reference documentation
 ```
 
-## Data and repository boundaries
-
-The following full-data artifacts remain local and are excluded by `.gitignore`:
-
-- `datasets/cowmata_imu/supervised_cache/samples.csv` — approximately 60 MB;
-- `datasets/cowmata_imu/supervised_cache/session_cache/` — approximately 1.23 GB across 132 sessions.
-
-They are required for full retraining and real-data diagnostics. They are not obsolete cache waste. A fresh clone remains executable because the repository includes the demo session and both model artifacts. See [`docs/DATA_ACCESS.md`](docs/DATA_ACCESS.md) for versioned external delivery and integrity rules.
-
 ## Verified baseline
 
-The 20260818 baseline has been checked locally and in GitHub Actions:
+The 20260819 baseline is verified in [`docs/VERIFICATION_20260819.md`](docs/VERIFICATION_20260819.md); CI re-runs the contract suite on every push:
 
-- **24/24 contract tests passed**;
-- **132 supervised sessions** scanned, covering **131.5739 hours**;
-- **344,287 supervised center points** verified;
-- **six leave-one-cow-out manifests** checked for session overlap;
-- refactored GBDT prediction parity: maximum absolute probability difference `1.11e-16`;
-- bundled demo: **120 dense 2 Hz points** and successful CSV export;
-- CPU PyTorch forward, backward, and optimizer smoke test passed.
+- **36/36 contract tests** and **12/12 pipeline tests** passed, real execution;
+- `cowmata check-data` — PASS: 1,199 annotations, 132 sessions, 0 problems;
+- storage plan: 292.9 GB (schema 1) → **101.4 GB** (schema 2) for 200 cows × 7 days;
+- `FEATURE_VERSION=1` reproduces the deployed 104 feature names in order, verified against the pickle byte stream;
+- bundled demo: **120 dense 2 Hz points**, matching the 20260818 documented behaviour;
+- hysteresis assembly: a 1 s probability dip scores **1 interval** (the old single-threshold rule scored 2);
+- bundle round-trip: per-event thresholds and `feature_version` are written by training and honoured unchanged at inference;
+- `cowmata check-env` completes on a host with no torch.
 
-See [`docs/VERIFICATION_20260818.md`](docs/VERIFICATION_20260818.md) for limitations and the exact evidence boundary.
+Stated plainly: every torch-dependent module was compile-checked and contract-tested with the tests skipping themselves; no training run was performed in this record, so no real-data metric in this package is new. Run `pytest tests/test_torch_contracts.py` on the RTX 3090 host before trusting any deep-model number.
 
 ## Reference radar
 
@@ -305,9 +314,9 @@ The following open-source projects are tracked for model design, benchmarking, a
 
 ## Roadmap
 
-- complete formal independent-cow reporting for the current deep checkpoint;
+- complete formal independent-cow reporting for the MS-TCN++ model;
 - improve event candidate ranking with reviewed hard negatives;
-- compare TCN/ResNet1D baselines with modern classification and representation-learning models;
+- compare MS-TCN++ with modern classification and representation-learning models;
 - add calving onset/delivery anchors and multi-horizon risk labels;
 - introduce PPG and temperature quality gates before multimodal fusion;
 - add a versioned private data registry with archive hashes and access control;

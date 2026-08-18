@@ -48,4 +48,4 @@ Temporary source bundles belong under `runs/share/`; they are ignored by Git and
 
 ## Credentials
 
-Use OAuth, SSH, or a personal access token. Never store account passwords, tokens, extraction codes, or private dataset links in this repository. Rotate any credential that appears in chat, logs, commits, or issue content.
+Use OAuth, SSH, or a personal access token. Never store account passwords or tokens in this repository. Rotate any credential that appears in chat, logs, commits, or issue content. The README dataset section records the current snapshot's Baidu Netdisk links and extraction codes by owner decision (20260819); keep future snapshots on the private delivery flow in `docs/DATA_ACCESS.md`.

@@ -10,9 +10,9 @@
 
   <p>
     <a href="https://github.com/zxq309/cowmata-tailring/actions/workflows/ci.yml"><img src="https://github.com/zxq309/cowmata-tailring/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-    <a href="https://github.com/zxq309/cowmata-tailring/releases/tag/v0.2.0"><img src="https://img.shields.io/badge/release-v0.2.0-0A7EA4" alt="Release v0.2.0"></a>
+    <a href="https://github.com/zxq309/cowmata-tailring/releases/tag/v0.3.0"><img src="https://img.shields.io/badge/release-v0.3.0-0A7EA4" alt="Release v0.3.0"></a>
     <img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB" alt="Python">
-    <img src="https://img.shields.io/badge/PyTorch-2.4%2B-EE4C2C" alt="PyTorch">
+    <img src="https://img.shields.io/badge/PyTorch-optional-EE4C2C" alt="PyTorch 可选">
     <img src="https://img.shields.io/badge/data%20split-by%20cow-2E8B57" alt="Split by cow">
     <img src="https://img.shields.io/badge/license-proprietary-lightgrey" alt="Proprietary">
   </p>
@@ -27,20 +27,34 @@
 
 ## 更新记录
 
-- **2026-08-18** — 新增公司官方 logo、署名四位实名贡献者及其单位，并为外部参考雷达添加序号。完整历史见 [`CHANGELOG.md`](CHANGELOG.md)。
+- **2026-08-19** — 发布 v0.3.0：MS-TCN++ 多阶段时序模型（ASRF 式边界头）；schema-2 int16 缓存（52 → 18 字节/帧）；新增 `MOUNTING` / `MOUNTED_BY` 事件头；迟滞后处理；逐事件阈值写入模型包；torch 变为可选依赖；完整监督缓存以百度网盘链接发布（见[数据集](#数据集)一节）。完整历史见 [`CHANGELOG.md`](CHANGELOG.md)。
+- **2026-08-18** — 新增公司官方 logo、署名四位实名贡献者及其单位，并为外部参考雷达添加序号。
 
 ## 概述
 
 COWMATA 背后的杨凌园上园智能科技有限公司（Yangling Yuanshangyuan Intelligent Technology Co., Ltd.）研发智能动物健康监测软硬件。官方产品线涵盖用于发情、妊娠、产犊与健康风险监测的尾环传感器。本仓库包含算法层，用于将时间同步的尾端传感数据流与视频复核标签转化为可复现的行为与事件预测。
 
-`20260818` 基线围绕一组稳定的工程规则重建：
+`20260819` 基线围绕一组稳定的工程规则构建：
 
 - 在选择训练窗口前保留连续原始传感数据；
 - 在绝对时间轴上对齐传感器数据与视频标签；
+- 以稠密分块监督训练——每个窗口步长一个标签帧，而非每个标签点一个窗口；
 - 按动物个体划分训练、验证与测试集；
-- 以独立奶牛与独立事件计数报告，而非膨胀的滑动窗口计数；
-- 结合时序编码器、任务专用事件头与站立/躺卧状态机；
-- 利用候选挖掘与人工视频复核高效扩充稀有事件标签。
+- 结合多阶段时序模型（MS-TCN++）、任务专用事件头与站立/躺卧状态机；
+- 以迟滞与边界吸附做后处理，再挖掘候选供人工视频复核，高效扩充稀有事件标签；
+- 以独立奶牛与独立事件计数报告，而非膨胀的滑动窗口计数。
+
+## 三个任务，三个时间尺度
+
+正确命名任务，才能找到正确的文献与库。
+
+| | 输入 | 输出 | 尺度 | 领域 |
+|---|---|---|---|---|
+| **A. 姿态 / 运动** | 连续 50 Hz 流 | 每一时刻的状态 | 秒 | 时序分割 |
+| **B. 七类事件** | 连续 50 Hz 流 | 区间 `(起, 止, 类别)` | 秒至 30 秒 | 时序动作检测 |
+| **C. 发情 / 产犊** | A + B 按小时与天聚合 | 风险与告警 | 天 | 变点 / 风险预测 |
+
+这不是时序分类（UCR/UEA 风格、基于预切序列），也不是预测。只有 C 层接近预测。
 
 ## 快速开始
 
@@ -57,13 +71,16 @@ conda activate cowmata
 
 ```bash
 python -m pip install -e . --no-deps
+# 深度学习主机额外安装：
+python -m pip install -e ".[deep]"
 ```
 
 ### 2. 验证克隆
 
 ```bash
-pytest
-cowmata check-env --device cpu --precision fp32
+pytest tests/test_contracts.py tests/test_pipelines.py   # 48 个测试，无需 torch
+cowmata check-env --device cpu                            # 无 torch 也可运行
+pytest tests/test_torch_contracts.py                      # 模型契约，需要 torch
 ```
 
 ### 3. 运行内置 60 秒演示
@@ -106,7 +123,7 @@ print(result.dense_path)
 
 ```bash
 # 校验会话元数据、标签、缓存契约与奶牛级划分。
-cowmata check-data
+cowmata check-data --root .
 
 # 读取每个本地缓存数组作为更强的完整性检查。
 cowmata check-data --full-cache-scan
@@ -114,12 +131,29 @@ cowmata check-data --full-cache-scan
 # 写出结构化数据集诊断报告。
 cowmata diagnose --out runs/diagnostics
 
-# 检查 CPU 或 CUDA 前向/反向执行。
-cowmata check-env --device cpu --precision fp32
-cowmata check-env --device cuda --precision auto
+# 采集前估算缓存占用。
+cowmata plan-storage --cows 200 --days 7
 
-# 运行选定的可复现流水线阶段。
-cowmata pipeline -- --stages diagnose,features,feature_model
+# 奶牛分组 k 折划分，验证集与训练集奶牛不相交。
+cowmata make-splits --folds 5
+
+# 从原始 JSON + 标签重建 schema-2 缓存。
+cowmata build-cache --annotations ... --calibration-manifest ... --output-root ...
+
+# 手工特征表（离线或因果窗口）。
+cowmata build-features --samples ... --session-cache ... --out ... --offline
+
+# 在奶牛不相交划分上训练 GBDT 并写入逐事件阈值。
+cowmata train-gbdt --feature-table ... --backend xgboost --device cuda
+
+# 在一个折上训练多阶段时序模型。
+cowmata train --labels ... --cache-root ... --splits ... --fold 1 --out runs/fold1
+
+# 从稠密预测构建人工复核队列。
+cowmata mine --predictions runs/... --events URINATION,MOUNTED_BY --out runs/review_01
+
+# 检查 CPU 或 CUDA 执行。
+cowmata check-env --device cpu --precision fp32
 ```
 
 ## 产品背景
@@ -149,10 +183,10 @@ flowchart LR
     V["同步视频<br/>可复核金标准"] --> C["母标签时间轴<br/>状态 · 转换 · 重叠事件"]
     B --> D["分段安全预处理<br/>间隙感知缓存 · 训练时窗口"]
     C --> D
-    D --> E["共享时序表示<br/>GBDT 特征或 ResNet1D/TCN"]
+    D --> E["共享时序表示<br/>GBDT 特征或 MS-TCN++（多阶段）"]
     E --> F1["姿态与行走"]
     E --> F2["转换头<br/>站立 · 躺卧"]
-    E --> F3["稀有事件头<br/>排尿 · 排便 · 尾部动作"]
+    E --> F3["稀有事件头<br/>排尿 · 排便 · 尾部动作 · 骑乘"]
     F1 --> G["站立/躺卧状态机"]
     F2 --> G
     F3 --> H["候选排序与区间合并"]
@@ -174,7 +208,8 @@ flowchart LR
 | 持续状态 | `STANDING`、`LYING`、`WALKING` | 由数据契约支持；站立/躺卧由状态逻辑稳定 |
 | 姿态转换 | `STANDING_UP`、`LYING_DOWN` | 已纳入可部署的标注辅助模型 |
 | 排泄事件 | `URINATION`、`DEFECATION` | 已纳入；事件级验证仍为验收标准 |
-| 尾部动作 | `TAIL_RAISED`、`TAIL_WAGGING` | 研究/稀有事件候选挖掘 |
+| 骑乘事件 | `MOUNTING`、`MOUNTED_BY` | 20260819 新增；被骑乘是发情的兽医金标准 |
+| 尾部动作 | `TAIL_RAISED` | 已纳入；`TAIL_WAGGING` 已弃用（可读、不训练、不报告） |
 | 繁殖风险 | 发情、妊娠、产犊 | 产品与数据采集路线图；不作为本仓库基线已验证内容 |
 | 健康可行性 | 温度、PPG、乳腺炎相关研究 | 多模态研究方向；无未经验证的临床结论 |
 
@@ -184,48 +219,40 @@ flowchart LR
 
 | 产物 | 角色 | 状态 | 备注 |
 |---|---|---|---|
-| `weights/deploy/gbdt_full.joblib` | 运营标注辅助 | 可用 | 104 个工程特征；八个稠密输出；已验证重构前后预测一致 |
-| `weights/checkpoints/offline_tcn_dev_epoch2.pt` | 深度模型续训与冒烟测试 | 仅开发 | 可加载并产出有限输出，但尚未完成正式模型报告 |
+| `weights/deploy/gbdt_full.joblib` | 运营标注辅助 | 可用 | `feature_version=1` 下 104 个工程特征；与已验证的 20260818 产物字节一致。其早于逐事件阈值机制，重训前以 feature_version 1 与 0.5 阈值打分 |
+| `weights/checkpoints/offline_tcn_dev_epoch2.pt` | 仅存证 | 20260819 无法加载 | 20260819 模型为 `MultiTaskMSTCN`，架构与标签集均不同，此检查点不可加载或续训。它从未是可部署模型 |
 
-GBDT 产物为默认推理模型。在训练运行、跨奶牛独立评估、阈值与部署行为完整记录之前，TCN 检查点不得作为生产模型呈现。
+GBDT 产物为默认推理模型。TCN 检查点不得作为生产模型呈现；其替代者（MS-TCN++）通过 `cowmata train` 训练，并按标准跨奶牛独立协议报告。
 
 ## 数据契约
 
 机器可读配置为 [`configs/dataset.yaml`](configs/dataset.yaml)；完整规则见 [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md)。
 
 - 原始九轴 IMU 以 **50 Hz** 连续采样，并在加窗前保留。
-- 缓存的 `features.npy` 数组包含 **13 个通道**；连续性分段由 `metadata.json` 定义。
+- schema-2 缓存存储 `signal.i16.npy`——`(N, 9)` **int16 设备计数值**——以及 `meta.json`（标定除数/偏置、连续性分段、稀疏质量区间与 `tail_position`）。每帧 18 字节；20260818 的 schema-1 `features.npy`（13 个 float32 通道）通过同一 API 透明读取。
 - 窗口在训练/推理期间创建，且不得跨越已记录的数据间隙。
 - 视频与传感器记录共享同一绝对时间轴。
-- 事件保留起止区间，并可与持续状态重叠。
+- 事件保留起止区间，并可与持续状态重叠；20260819 新增 `MOUNTING` / `MOUNTED_BY`，弃用 `TAIL_WAGGING`。
 - 训练/验证/测试归属按 `cow_id` 分离。
 - 归一化、阈值选择与早停不得查看测试奶牛。
 - 可报告样本量基于动物数、独立事件与硬负样本——而非滑动窗口。
 
 ## 训练与评估
 
-### 特征模型
+特征与 GBDT 分支：
 
 ```bash
-python -m scripts.build_feature_table
-python -m scripts.train_feature_model
+cowmata build-cache --annotations ... --calibration-manifest ... --output-root ...
+cowmata build-features --samples ... --session-cache ... --out runs/feature_table --offline
+cowmata train-gbdt --feature-table runs/feature_table/feature_table.parquet --backend xgboost --device cuda
 ```
 
-### 完整 GBDT 候选模型
+深度多阶段时序模型（MS-TCN++），按奶牛分折：
 
 ```bash
-python -m scripts.train_full_gbdt \
-  --feature-table runs/feature_table/feature_table.parquet
-```
-
-### 深度留一牛（leave-one-cow-out）实验
-
-```bash
-cowmata pipeline -- \
-  --stages deep_loco \
-  --epochs 30 \
-  --batch-size 32 \
-  --device cuda
+cowmata make-splits --folds 5
+cowmata train --labels ... --cache-root ... --splits ... --fold 1 --out runs/fold1 --device cuda
+cowmata mine --predictions runs/... --events URINATION,MOUNTED_BY --out runs/review_01
 ```
 
 每个实验必须记录：
@@ -246,41 +273,55 @@ cowmata pipeline -- \
 ```text
 .github/                    CI、issue 模板与 pull-request 模板
 assets/                     官方品牌/产品素材与仓库视觉资源
-cattle_imu/                 稳定算法核心与序列化模型兼容层
-cowmata/                    面向用户的 Python API 与 CLI
-scripts/                    数据、训练、诊断、评估与挖掘入口
+cowmata/                    单一包：io、cache、preprocessing、features、labels、
+                            models、dataset、train、metrics、postprocess、daily、
+                            inference、gbdt、tools、runtime、cli、compat
+scripts/                    cowmata.cli 的四行薄封装（兼容旧模块路径）
+experiments/                已尝试未采用（晚期融合）
 configs/                    机器可读数据集配置
 datasets/cowmata_imu/       小型元数据 + 本地 Git 忽略的监督缓存
 examples/demo_data/         可直接克隆的 60 秒真实会话演示
 weights/deploy/             可用标注辅助模型
-weights/checkpoints/        仅开发用续训检查点
+weights/checkpoints/        仅存证用开发检查点
 runs/                       生成的实验与预测（Git 忽略）
-tests/                      数据、推理与 PyTorch 契约测试
+tests/                      数据、流水线与 PyTorch 契约测试
 docs/                       数据、迁移、验证与参考文档
 ```
 
-## 数据与仓库边界
+## 数据集
 
-以下全量数据产物保留在本地，并由 `.gitignore` 排除：
+完整监督缓存不进入 Git：体量超出普通 Git 的适用范围，且包含公司、设备与动物标识。它以两个百度网盘归档分发；新克隆所需的其余内容随仓库提供。
 
-- `datasets/cowmata_imu/supervised_cache/samples.csv` — 约 60 MB；
-- `datasets/cowmata_imu/supervised_cache/session_cache/` — 约 1.23 GB，共 132 个会话。
+| 产物 | 内容 | 大小 | 分发方式 |
+|---|---|---|---|
+| `supervised_cache/session_cache/` | 132 个连续 50 Hz 会话——schema-2 `signal.i16.npy`（9 通道 int16 计数值）+ `meta.json`（标定、分段、`tail_position`） | ≈ 1.4 GB | [百度网盘 · session_cache](https://pan.baidu.com/s/1lnLpqO_UX5S57zmI1Qf_qw?pwd=u9n4)（提取码 `u9n4`） |
+| `supervised_cache/samples.csv` | 351,128 个监督中心点——牛 / 会话 / 分段坐标与逐事件掩码 | ≈ 59 MB | [百度网盘 · samples.csv](https://pan.baidu.com/s/12mj-bflbcekc1x1_HI2NeQ?pwd=s5rd)（提取码 `s5rd`） |
+| `supervised_cache/sessions.csv`、`dense_labels.csv.gz` | 会话元数据与 GBDT/深度分支共享的稠密标签帧 | ≈ 7 MB | 随仓库提供 |
+| `annotations/`、`loco_splits/`、`development_split/` | 仲裁后标注与奶牛级划分清单 | 小 | 随仓库提供 |
+| `examples/demo_data/…/demo_session_60s/` | 60 秒真实会话（schema 1），供克隆后冒烟测试 | ≈ 0.2 MB | 随仓库提供 |
 
-它们是完整重训练与真实数据诊断所必需的，并非过时缓存垃圾。新克隆仍可执行，因为仓库包含演示会话与两个模型产物。版本化外部交付与完整性规则见 [`docs/DATA_ACCESS.md`](docs/DATA_ACCESS.md)。
+恢复完整缓存：将两个归档解压到 `datasets/cowmata_imu/supervised_cache/`，然后运行：
+
+```bash
+cowmata check-data --full-cache-scan
+```
+
+这些产物是完整重训练与真实数据诊断所必需的，并非过时缓存垃圾。交付与完整性规则见 [`docs/DATA_ACCESS.md`](docs/DATA_ACCESS.md)。
 
 ## 已验证基线
 
-20260818 基线已在本地与 GitHub Actions 中检查：
+20260819 基线的验证记录见 [`docs/VERIFICATION_20260819.md`](docs/VERIFICATION_20260819.md)；CI 在每次推送时重跑契约套件：
 
-- **24/24 契约测试通过**；
-- **132 个监督会话**已扫描，覆盖 **131.5739 小时**；
-- **344,287 个监督中心点**已验证；
-- **六个留一牛清单**已检查会话重叠；
-- 重构后 GBDT 预测一致性：最大绝对概率差 `1.11e-16`；
-- 内置演示：**120 个 2 Hz 稠密点**并成功导出 CSV；
-- CPU PyTorch 前向、反向与优化器冒烟测试通过。
+- **36/36 契约测试**与 **12/12 流水线测试**通过，真实执行；
+- `cowmata check-data` — PASS：1,199 条标注、132 个会话、0 个问题；
+- 存储规划：200 牛 × 7 天，292.9 GB（schema 1）→ **101.4 GB**（schema 2）；
+- `FEATURE_VERSION=1` 按序复现已部署的 104 个特征名（对照 pickle 字节流验证）；
+- 内置演示：**120 个 2 Hz 稠密点**，与 20260818 记录行为一致；
+- 迟滞组装：1 秒概率凹陷判为 **1 个区间**（旧单阈值规则判 2 个）；
+- 模型包回环：训练写出的逐事件阈值与 `feature_version` 在推理时原样生效；
+- 无 torch 主机上 `cowmata check-env` 正常完成。
 
-限制与确切证据边界见 [`docs/VERIFICATION_20260818.md`](docs/VERIFICATION_20260818.md)。
+如实说明：所有 torch 依赖模块仅做了编译检查与契约测试（测试自行跳过）；本记录未执行训练运行，因此本包内没有任何新的真实数据指标。在 RTX 3090 主机上运行 `pytest tests/test_torch_contracts.py` 之前，请勿信任任何深度模型数字。
 
 ## 参考雷达
 
@@ -305,9 +346,9 @@ docs/                       数据、迁移、验证与参考文档
 
 ## 路线图
 
-- 为当前深度检查点完成正式的跨奶牛独立报告；
+- 为 MS-TCN++ 模型完成正式的跨奶牛独立报告；
 - 利用复核硬负样本改进事件候选排序；
-- 将 TCN/ResNet1D 基线与现代分类及表示学习模型对比；
+- 将 MS-TCN++ 与现代分类及表示学习模型对比；
 - 增加产犊开始/分娩锚点与多时域风险标签；
 - 在多模态融合前引入 PPG 与温度质量门控；
 - 增加带归档哈希与访问控制的版本化私有数据注册表；

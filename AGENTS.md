@@ -1,21 +1,26 @@
-# COWMATA repository instructions
-
-This repository is the clean `20260818` baseline for the COWMATA smart cattle tail-ring algorithm.
+# COWMATA repository instructions (20260819)
 
 ## Non-negotiable data and evaluation rules
 
-- Preserve raw nine-axis IMU continuously at 50 Hz. Windowing is a training parameter, not a raw-data format.
-- Align sensor records and video labels on an absolute timeline and retain event start/end timestamps.
-- Split train, validation and test data by `cow_id`; never split adjacent windows from one cow across sets.
-- Count independent cows and events, not overlapping windows, when reporting sample size.
-- Keep the shared temporal encoder, multi-event heads and standing/lying state-machine design compatible.
-- Report event Precision/Recall/F1, false alarms per cow per 24 h and localization error; do not use window Accuracy alone.
+- Preserve raw nine-axis IMU continuously at 50 Hz. Windowing is a training parameter,
+  never a raw-data format.
+- Never let a window, chunk, filter or rolling statistic cross a `segment` boundary.
+- Split train / validation / test by `cow_id`. Validation must be cow-disjoint from
+  training, not merely session-disjoint.
+- Report independent cows and independent events. Overlapping windows are not samples.
+- Report every metric per cow as well as pooled, with a cow-level bootstrap interval.
+- Do not report event precision or false-alarm rates without exhaustive
+  `review_coverage`. The metric code enforces this; do not route around it.
+- There is exactly one model-selection objective: `cowmata.metrics.selection_score`.
 
 ## Repository boundaries
 
-- Do not commit `datasets/cowmata_imu/supervised_cache/session_cache/`, `samples.csv`, `runs/` or generated archives.
-- Keep the 60-second demo session and deploy weights working so a fresh clone can run an inference smoke test.
-- New experiments write to timestamped directories under `runs/`; promote only validated weights and reports.
-- Preserve compatibility with serialized objects under the `cattle_imu` module unless a migration is supplied.
+- Never commit `supervised_cache/session_cache/`, `samples.csv`, `runs/`, or archives.
+- Keep the 60-second demo session and the deployed GBDT working from a fresh clone.
+- `weights/deploy/gbdt_full.joblib` is byte-identical to a verified artefact. Do not
+  rewrite it; `cowmata/compat.py` keeps it loadable.
+- Changing the feature bank requires bumping `features.FEATURE_VERSION` and recording
+  the version in every bundle that consumes it.
 
-Before merging algorithm changes, run `pytest` and the demo prediction command documented in `README.md`.
+Before merging: `python tests/test_contracts.py`, `python tests/test_torch_contracts.py`
+on the GPU host, and the demo prediction in `README.md`.

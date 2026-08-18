@@ -1,6 +1,8 @@
-"""Public COWMATA API."""
+"""COWMATA tail-ring behaviour intelligence."""
 
-from cattle_imu.inference import COWMATA, PredictionResult
+from .compat import install_legacy_aliases
 
-__all__ = ["COWMATA", "PredictionResult"]
-__version__ = "0.1.0"
+install_legacy_aliases()
+
+__version__ = "0.3.0"
+__all__ = ["install_legacy_aliases", "__version__"]
