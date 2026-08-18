@@ -278,12 +278,24 @@ See [`docs/VERIFICATION_20260818.md`](docs/VERIFICATION_20260818.md) for limitat
 
 ## Reference radar
 
-Two primary repositories requested for continuous tracking:
+The following open-source projects are tracked for model design, benchmarking, and engineering practice. Repositories are references, not copied dependencies; license compatibility and cow-level reproduction are required before adoption. See [`docs/REFERENCE_PROJECTS.md`](docs/REFERENCE_PROJECTS.md) for the detailed watchlist.
 
-- [THUML Time-Series-Library](https://github.com/thuml/Time-Series-Library) — broad benchmarking across forecasting, imputation, anomaly detection, and classification.
-- [timeseriesAI/tsai](https://github.com/timeseriesAI/tsai) — practical PyTorch/fastai models and workflows for time-series classification.
-
-The curated [`docs/REFERENCE_PROJECTS.md`](docs/REFERENCE_PROJECTS.md) watchlist also covers TCN implementations, temporal action segmentation, time-series representation learning, wearable SSL, rare-event/anomaly detection, and ML data/version tooling. Repositories are references, not copied dependencies; license compatibility and cow-level reproduction are required before adoption.
+1. [Time-Series-Library](https://github.com/thuml/Time-Series-Library) — unified benchmarking for forecasting, imputation, anomaly detection, and classification.
+2. [tsai](https://github.com/timeseriesAI/tsai) — practical PyTorch/fastai models and workflows for time-series classification.
+3. [aeon](https://github.com/aeon-toolkit/aeon) — actively maintained time-series machine-learning and deep-learning toolkit.
+4. [sktime](https://github.com/sktime/sktime) — unified time-series framework with reproducible estimator conventions.
+5. [tslearn](https://github.com/tslearn-team/tslearn) — classical time-series learning, similarity, and DTW-based methods.
+6. [PyTorch-TCN](https://github.com/paul-krug/pytorch-tcn) — causal and non-causal temporal convolutional networks.
+7. [MS-TCN](https://github.com/yabufarha/ms-tcn) — multi-stage temporal action segmentation.
+8. [C2F-TCN](https://github.com/dipika-singhania/C2F-TCN) — coarse-to-fine temporal action segmentation.
+9. [ASFormer](https://github.com/ChinaYi/ASFormer) — transformer-based temporal action segmentation.
+10. [TS2Vec](https://github.com/zhihanyue/ts2vec) — universal contrastive time-series representation learning.
+11. [TS-TCC](https://github.com/emadeldeen24/TS-TCC) — temporal and contextual contrastive representation learning.
+12. [OxWearables](https://github.com/OxWearables/ssl-wearables) — self-supervised wearable accelerometer learning.
+13. [Orion](https://github.com/sintel-dev/Orion) — unsupervised anomaly-detection pipelines for rare temporal patterns.
+14. [TAB](https://github.com/decisionintelligence/TAB) — benchmarking framework for time-series anomaly detection.
+15. [DVC](https://github.com/iterative/dvc) — dataset and model versioning without committing large arrays to Git.
+16. [MLflow](https://github.com/mlflow/mlflow) — experiment, model, and artifact tracking.
 
 ## Roadmap
 
@@ -297,11 +309,22 @@ The curated [`docs/REFERENCE_PROJECTS.md`](docs/REFERENCE_PROJECTS.md) watchlist
 
 ## Team
 
-- **zxq309** — Chief Technology Officer and repository maintainer
-- **Zhang Yalong** — Legal Representative of the company
-- **Jia Tengyu** — Student Researcher and project contributor
+<p align="center">
+  <a href="https://www.cowmata.com/">
+    <img src="assets/brand/cowmata-company-logo.png" height="64" alt="Yangling Yuanshangyuan Intelligent Technology Co., Ltd.">
+  </a>
+</p>
+
+- **Xiangqing Zhang** — Chief Technology Officer, Yangling Yuanshangyuan Intelligent Technology Co., Ltd.; Yan'an University
+- **Yalong Zhang** — Founder, Yangling Yuanshangyuan Intelligent Technology Co., Ltd.
+- **Tengyu Jiao** — Yan'an University
+- **Yachen Zhao** — Yan'an University
 
 The project is developed by the COWMATA algorithm team. Personal GitHub accounts should be credited through their own verified commits; contribution history is never fabricated.
+
+## Changelog
+
+- **2026-08-18** — Added the official company logo, credited four named contributors with institutional affiliations, and numbered the external reference radar. See [`CHANGELOG.md`](CHANGELOG.md) for the complete history.
 
 ## Responsible use and license
 

@@ -8,8 +8,9 @@ All notable changes to this repository are recorded here.
 - Expanded the README with product context, architecture, model inventory, data contracts, training/evaluation rules, verification evidence, roadmap, and team governance.
 - Added official COWMATA logo and tail-sensor product assets from the company website.
 - Added an original multimodal AI pipeline hero illustration.
-- Corrected contributor roles: Zhang Yalong is the Legal Representative; Jia Tengyu is a Student Researcher.
 - Added a curated external-project watchlist for time-series modeling, temporal segmentation, wearable representation learning, anomaly detection, and MLOps.
+- Added the official company logo from the Chinese website and credited four named contributors with institutional affiliations.
+- Numbered the external reference radar and introduced a concise README changelog section.
 - Converted generated diagnostic reports and inference display labels to English.
 - Removed the Chinese DOCX design artifact from GitHub while retaining it locally.
 

@@ -7,6 +7,7 @@ The following files were retrieved from the official COWMATA English website on 
 | Repository file | Official source |
 |---|---|
 | `brand/cowmata-logo.svg` | `https://www.cowmata.com/assets/dist/img/logo_cowmata.svg` |
+| `brand/cowmata-company-logo.png` | `https://www.cowmata.com/assets/dist/img/logo.png` |
 | `product/tail-sensor-farm.png` | `https://www.cowmata.com/assets/dist/img/pro_01.png` |
 | `product/tail-sensor-vet.png` | `https://www.cowmata.com/assets/dist/img/pro_02.png` |
 
