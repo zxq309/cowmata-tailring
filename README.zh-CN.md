@@ -163,6 +163,10 @@ flowchart LR
     H --> K
 ```
 
+总体框架如下图所示：
+
+![COWMATA 总体框架](assets/figures/cowmata-framework-zh.png)
+
 ### 当前任务清单
 
 | 层 | 输出 | 当前状态 |

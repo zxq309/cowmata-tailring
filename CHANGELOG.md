@@ -16,6 +16,7 @@ All notable changes to this repository are recorded here.
 - Added a Simplified Chinese README with a language switcher and a company contact link.
 - Trimmed verbose README statements and used Chinese author names in the Chinese README.
 - Moved Quick start before the product details and added citation and contributing sections.
+- Added English and Simplified Chinese overall-framework diagrams to the system-architecture section.
 
 ## [0.1.0] - 2026-08-18
 

@@ -163,6 +163,10 @@ flowchart LR
     H --> K
 ```
 
+The overall framework is shown below:
+
+![COWMATA overall framework](assets/figures/cowmata-framework-en.png)
+
 ### Current task inventory
 
 | Layer | Outputs | Current status |
