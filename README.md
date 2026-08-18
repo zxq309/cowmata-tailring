@@ -18,6 +18,8 @@
   </p>
 </div>
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 ![COWMATA multimodal tail-sensor intelligence pipeline](assets/figures/cowmata-ai-pipeline-hero.png)
 
 > [!IMPORTANT]
@@ -332,4 +334,4 @@ Copyright © 2026 Yangling Yuanshangyuan Intelligent Technology Co., Ltd. All ri
 
 This repository currently has no public-use license. Source code, model artifacts, product imagery, and project data remain proprietary unless the company publishes separate terms. Third-party software remains governed by its own license. See [`NOTICE`](NOTICE) and [`SECURITY.md`](SECURITY.md).
 
-For company and product information, visit [cowmata.com](https://www.cowmata.com/en/).
+For company and product information, visit [cowmata.com](https://www.cowmata.com/en/); for inquiries, see the [contact page](https://www.cowmata.com/contact/).
