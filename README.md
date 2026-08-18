@@ -42,11 +42,9 @@ The `20260818` baseline was rebuilt around a small set of durable engineering ru
 - combine temporal encoders, task-specific event heads, and a standing/lying state machine;
 - use candidate mining and human video review to expand rare-event labels efficiently.
 
-The public-facing repository layout is intentionally similar in spirit to mature ML projects such as Ultralytics: one Python API, one CLI, executable examples, model manifests, tests, CI, contribution rules, and versioned releases.
-
 ## Product context
 
-The official [COWMATA website](https://www.cowmata.com/en/) describes an animal digital-brain and intelligent early-warning platform spanning intelligent hardware, multimodal sensing, AI algorithms, and livestock management. The images below are official COWMATA product assets stored locally in this repository so the README remains stable.
+The official [COWMATA website](https://www.cowmata.com/en/) describes an animal digital-brain and intelligent early-warning platform spanning intelligent hardware, multimodal sensing, AI algorithms, and livestock management.
 
 <table>
   <tr>
@@ -119,8 +117,6 @@ The machine-readable configuration is [`configs/dataset.yaml`](configs/dataset.y
 - Train/validation/test membership is separated by `cow_id`.
 - Normalization, threshold selection, and early stopping may not inspect test cows.
 - Reportable sample size is based on animals, independent events, and hard negatives—not sliding windows.
-
-The compact Git-tracked annotation table retains a few original-language provenance fields alongside standardized English labels and event codes. Those provenance values are data, not user-interface copy, and are preserved intentionally.
 
 ## Quick start
 
@@ -326,7 +322,7 @@ The following open-source projects are tracked for model design, benchmarking, a
 - **Tengyu Jiao** — Yan'an University
 - **Yachen Zhao** — Yan'an University
 
-The project is developed by the COWMATA algorithm team. Personal GitHub accounts should be credited through their own verified commits; contribution history is never fabricated.
+The project is developed by the COWMATA algorithm team.
 
 ## Responsible use and license
 
