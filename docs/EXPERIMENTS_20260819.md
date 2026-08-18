@@ -52,7 +52,35 @@ less data.
 | 23335-7 | 0.932 | 0.855 | 0.978 | 0.980 | 0.986 |
 | 23489-8 | 1.000 | 1.000 | 1.000 | 1.000 | 0.990 |
 
-### Event-level diagnostics, pooled over the 8 test cows
+### Pooled evaluation over all 8 test cows (official metric functions)
+
+All 8 test-cow prediction files merged into one pool (~334k evaluation points, ~47
+annotated hours), scored with the official metric functions using one threshold per
+event — the median of that event's fold thresholds. There is deliberately no single
+"event accuracy" in this report: events are sparse and predicting nothing scores >99%
+point-wise, so the metric contract forbids quoting one. The posture head does carry a
+real frame-level accuracy.
+
+| task head | overall metric | value | events: true / predicted / hit |
+|---|---|---|---|
+| Posture (standing/lying) | accuracy (MoF) · macro-F1 | **0.596** · 0.374 | — |
+| WALKING | average precision | **0.532** | — |
+| STANDING_UP | recall@2.5 s · F1@25 · AP | 0.478 · 0.188 · 0.255 | 115 / 459 / 55 |
+| LYING_DOWN | recall@2.5 s · F1@25 · AP | 0.381 · 0.176 · 0.203 | 97 / 301 / 37 |
+| URINATION | recall@2.5 s · F1@25 · AP | 0.664 · 0.132 · 0.202 | 116 / 977 / 77 |
+| DEFECATION | recall@2.5 s · F1@25 · AP | 0.780 · 0.073 · 0.048 | 50 / 992 / 39 |
+| TAIL_RAISED | recall@2.5 s · F1@25 · AP | 0.625 · 0.033 · 0.314 | 32 / 1127 / 20 |
+| MOUNTING / MOUNTED_BY | not_evaluable (zero annotated positives) | — | — |
+| **selection_score** (the single model-selection objective) | | **0.387** | |
+
+Across the five event heads the model produced 3,856 predicted intervals against 410
+true ones — a ~9:1 over-prediction ratio. Recall is solid (0.38–0.78) and onset
+localisation is good, but F1@25 (0.03–0.19) and AP (0.05–0.31) pay for the flood of
+false intervals; thresholds selected on validation cows do not transfer to the two
+data-heavy animals. These pooled figures read systematically optimistic and stay
+diagnostics, not claims — see §3.
+
+### Event-level diagnostics, cow-level bootstrap over the 8 test cows
 
 Cow-level bootstrap 95% intervals in brackets (n = 8 unless noted). Every fold reports
 `evidence_level: not_evaluable` — the gate requires ≥10 true events across ≥3 cows per

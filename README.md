@@ -296,12 +296,32 @@ Stated plainly: that verification record predates the first training run and con
 
 First real-data run, 2026-08-18; full bilingual report: [docs/EXPERIMENTS_20260819.md](docs/EXPERIMENTS_20260819.md)（[中文版](docs/EXPERIMENTS_20260819.zh-CN.md)）.
 
-**MS-TCN++ 8-fold strict LOCO** (40.5 min on one RTX 3090; early stopping ended every fold at 9–21 epochs):
+**MS-TCN++ 8-fold strict LOCO** (40.5 min on one RTX 3090). Pooled evaluation over all 8 test cows (~334k evaluation points, ~47 annotated hours; official metric functions, one threshold per event — the fold-threshold median):
 
-- test selection score **mean 0.538, 95% cow-level bootstrap CI [0.470, 0.597]** (n = 8 cows; per-cow spread 0.35–0.64);
-- recall at 2.5 s tolerance: urination **0.745 [0.51, 0.94]**, defecation **0.703 [0.41, 0.91]**;
-- onset median error ~1–4 s; over-prediction on the two data-heavy cows is the dominant failure mode;
-- event precision and false-alarm rates remain **not claimable**: `review_coverage` is empty and each fold evaluates one cow.
+| Task head | Overall metric | Value | Events: true / predicted / hit |
+|---|---|---|---|
+| Posture (standing/lying) | accuracy (MoF) · macro-F1 | **0.596** · 0.374 | — |
+| WALKING | average precision | **0.532** | — |
+| STANDING_UP | recall@2.5 s · F1@25 · AP | 0.478 · 0.188 · 0.255 | 115 / 459 / 55 |
+| LYING_DOWN | recall@2.5 s · F1@25 · AP | 0.381 · 0.176 · 0.203 | 97 / 301 / 37 |
+| URINATION | recall@2.5 s · F1@25 · AP | 0.664 · 0.132 · 0.202 | 116 / 977 / 77 |
+| DEFECATION | recall@2.5 s · F1@25 · AP | 0.780 · 0.073 · 0.048 | 50 / 992 / 39 |
+| TAIL_RAISED | recall@2.5 s · F1@25 · AP | 0.625 · 0.033 · 0.314 | 32 / 1127 / 20 |
+| MOUNTING / MOUNTED_BY | not_evaluable (zero annotated positives) | — | — |
+| **selection_score** (the single model-selection objective) | | **0.387** | |
+
+How to read it:
+
+- There is no single "event accuracy" here on purpose: events are sparse and predicting
+  nothing scores >99% point-wise, so the metric contract forbids quoting one. The
+  posture row above is a real frame-level accuracy (MoF); events are reported as
+  recall, F1@25 and average precision instead.
+- The model finds events (recall 0.38–0.78) but over-predicts ~9:1 across the five
+  event heads (410 true intervals vs 3,856 predicted) — event F1@25 stays at
+  0.03–0.19 because of that flood of false intervals.
+- Per-cow spread remains large (test selection scores 0.35–0.64, bootstrap CI
+  [0.470, 0.597]), and event precision / false-alarm rates stay **not claimable** until
+  `review_coverage` exists; the hit ratios above come from labelled stretches only.
 
 **GBDT retrain** — full 351,127-row × 120-feature (v2) table, xgboost GPU, cow-disjoint validation (23381-w1, 23509-9), per-event thresholds written into the bundle. The artifact stays local (`runs/gbdt_full/`) and is not promoted to `weights/deploy/` until review evidence exists.
 
