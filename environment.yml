@@ -1,0 +1,22 @@
+name: cowmata
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - joblib
+  - numpy
+  - pandas
+  - pyarrow
+  - pyyaml
+  - scikit-learn
+  - scipy
+  - setuptools<85
+  - xgboost
+  - pip
+  - pip:
+      - pytorch-tcn>=1.2,<2
+      - pytest>=8
+
+# Install the CUDA-enabled PyTorch wheel matching the training computer, then:
+#   pip install -e . --no-deps
+# This prevents a generic pip install from replacing CUDA PyTorch with a CPU wheel.

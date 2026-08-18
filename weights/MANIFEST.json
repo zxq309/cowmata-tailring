@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "generated_for": "20260818",
+  "artifacts": [
+    {
+      "path": "weights/deploy/gbdt_full.joblib",
+      "role": "operational_annotation_assistance",
+      "status": "usable",
+      "size_bytes": 6710598,
+      "sha256": "b720dc23c03158987ddab8d64da8812a8c91087a9e33ca7345c90b9f54086f48",
+      "tasks": [
+        "POSTURE_LYING",
+        "WALKING",
+        "STANDING_UP",
+        "LYING_DOWN",
+        "URINATION",
+        "DEFECATION",
+        "TAIL_RAISED",
+        "TAIL_WAGGING"
+      ],
+      "feature_count": 104,
+      "note": "Byte-identical to the 20260816 operational model; real-cache prediction parity verified."
+    },
+    {
+      "path": "weights/checkpoints/offline_tcn_dev_epoch2.pt",
+      "role": "development_resume_and_smoke_test_only",
+      "status": "not_for_formal_deployment",
+      "size_bytes": 8545423,
+      "sha256": "c6eb509457a0e68660854c796b37069922970e53b8c5018105b46d8f8f23a049",
+      "model_class": "OfflineMultiTaskTCN",
+      "epoch": 2,
+      "parameter_count": 659081,
+      "note": "Loads and runs on real cached IMU, but the source run lacks a completed formal report."
+    }
+  ]
+}

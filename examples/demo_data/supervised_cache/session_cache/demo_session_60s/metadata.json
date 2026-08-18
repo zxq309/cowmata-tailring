@@ -1,0 +1,18 @@
+{
+  "cache_key": "demo_session_60s",
+  "device_mac": "DEMO",
+  "session_id": "demo_60s",
+  "cow_id": "DEMO_COW",
+  "sample_rate_hz": 50,
+  "channels": 13,
+  "source": "truncated real cache for repository smoke tests",
+  "segments": [
+    {
+      "segment_id": 0,
+      "start_index": 0,
+      "stop_index": 2999,
+      "start_ms": 0,
+      "stop_ms": 59980
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=69,<85"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cowmata"
+version = "0.1.0"
+description = "COWMATA cattle tail-ring IMU research and inference pipeline"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "joblib>=1.4",
+  "numpy>=2.0",
+  "pandas>=2.2",
+  "pyarrow>=17",
+  "PyYAML>=6",
+  "scikit-learn>=1.5",
+  "scipy>=1.14",
+  "torch>=2.4,<3",
+  "pytorch-tcn>=1.2,<2",
+  "xgboost>=2,<4",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+cowmata = "cowmata.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cattle_imu*", "cowmata*", "scripts*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

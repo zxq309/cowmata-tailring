@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+.venv/
+*.egg-info/
+build/
+dist/
+
+# Keep labels, session metadata and cow-level split manifests versionable.
+# Ignore only the large derived arrays and regenerable window tables.
+datasets/cowmata_imu/**/session_cache/
+datasets/cowmata_imu/supervised_cache/samples.csv
+
+# Models are small enough to version in Git; datasets remain local.
+
+# Every experiment writes into runs; only the placeholder is versioned.
+runs/*
+!runs/.gitkeep

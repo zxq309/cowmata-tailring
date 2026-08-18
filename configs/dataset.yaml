@@ -1,0 +1,12 @@
+name: cowmata_imu
+root: datasets/cowmata_imu
+sample_rate_hz: 50
+feature_channels: 13
+time_axis: absolute_timestamp
+annotations: annotations/annotations_adjudicated_minimal.csv
+supervised_samples: supervised_cache/samples.csv
+supervised_sessions: supervised_cache/sessions.csv
+supervised_cache: supervised_cache/session_cache
+loco_splits: loco_splits/loco_splits.json
+development_split: development_split/development_all.json
+split_unit: cow_id
