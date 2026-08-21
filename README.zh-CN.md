@@ -25,6 +25,9 @@
 > [!IMPORTANT]
 > 本仓库是一个经过验证的算法工程基线，而非独立的兽医诊断产品。产品级结论需具备完整的盲法金标准、跨奶牛独立评估、现场验证及适用的监管审查。
 
+> [!TIP]
+> 需要创建或复核视频—九轴同步标签时，请使用配套的 [COWMATA 牛尾环标注工具](https://github.com/zxq309/cattle-tail-ring-annotator)。该桌面工具实现 v4 标注协议与人工复核流程，并与本算法仓库直接配套。
+
 ## 更新记录
 
 - **2026-08-18** — 首次真实数据训练：MS-TCN++ 8 折严格 LOCO + GBDT 合规重训。按牛结果与 bootstrap 区间见双语[实验报告](docs/EXPERIMENTS_20260819.zh-CN.md)（[English](docs/EXPERIMENTS_20260819.md)）。

@@ -25,6 +25,9 @@
 > [!IMPORTANT]
 > This repository is a validated algorithm-engineering baseline, not a standalone veterinary diagnostic product. Product-level claims require complete blinded ground truth, independent-cow evaluation, field validation, and the applicable regulatory review. Read [`docs/VERIFICATION_20260819.md`](docs/VERIFICATION_20260819.md) before quoting any number from this package.
 
+> [!TIP]
+> Need to create or review synchronized video/IMU labels? Use the companion [COWMATA Tail-Ring Annotator](https://github.com/zxq309/cattle-tail-ring-annotator), which implements the protocol-v4 desktop annotation and human-review workflow used alongside this algorithm repository.
+
 ## Changelog
 
 - **2026-08-18** — First real-data training run: MS-TCN++ 8-fold strict LOCO plus a compliant GBDT retrain. Per-cow results and bootstrap intervals in the bilingual [experiment report](docs/EXPERIMENTS_20260819.md)（[中文版](docs/EXPERIMENTS_20260819.zh-CN.md)）.
